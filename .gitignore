@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+*.egg
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Environment — never commit secrets
+.env
+.env.prod
+.env.local
+.env.production
+.env.*.local
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+.pnpm-store/
+
+# Uploads & data
+uploads/
+*.db
+*.sqlite
+
+# Docker volumes & local dev overrides
+pg_data/
+qdrant_data/
+imocha-intelligence-hub/
+certs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
