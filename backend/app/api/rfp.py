@@ -1,11 +1,12 @@
 from anthropic import AsyncAnthropic
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from qdrant_client import AsyncQdrantClient
 import cohere
 
 from app.config import settings
 from app.core.utils.query_sanitizer import sanitize_query
+from app.core.utils.rate_limiter import limiter
 from app.dependencies import get_qdrant_client, get_cohere_client, get_anthropic_client, get_current_user
 from app.models.db_models import User
 from app.core.rag.retriever import hybrid_search
@@ -25,7 +26,9 @@ class RFPGenerateRequest(BaseModel):
 
 
 @router.post("/respond")
+@limiter.limit("10/minute")
 async def rfp_respond(
+    request: Request,
     body: RFPRespondRequest,
     current_user: User = Depends(get_current_user),
     qdrant_client: AsyncQdrantClient = Depends(get_qdrant_client),
@@ -44,7 +47,9 @@ async def rfp_respond(
 
 
 @router.post("/generate")
+@limiter.limit("10/minute")
 async def rfp_generate(
+    request: Request,
     body: RFPGenerateRequest,
     current_user: User = Depends(get_current_user),
     qdrant_client: AsyncQdrantClient = Depends(get_qdrant_client),

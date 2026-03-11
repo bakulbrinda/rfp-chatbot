@@ -46,6 +46,10 @@ services:
     ports:
       - "6333:6333"
       - "6334:6334"
+    environment:
+      # API key auth — set QDRANT_API_KEY in .env for production.
+      # Leave empty in development to skip auth.
+      - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
     volumes:
       - qdrant_data:/qdrant/storage
     restart: unless-stopped

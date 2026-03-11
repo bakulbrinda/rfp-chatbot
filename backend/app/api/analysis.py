@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from anthropic import AsyncAnthropic
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from qdrant_client import AsyncQdrantClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +10,7 @@ import cohere
 
 from app.config import settings
 from app.core.utils.query_sanitizer import sanitize_query
+from app.core.utils.rate_limiter import limiter
 from app.db.session import get_db
 from app.dependencies import get_qdrant_client, get_cohere_client, get_anthropic_client, get_current_user
 from app.models.db_models import User
@@ -40,7 +41,9 @@ class AnalysisResponse(BaseModel):
 
 
 @router.post("", response_model=AnalysisResponse)
+@limiter.limit("10/minute")
 async def run_analysis_endpoint(
+    request: Request,
     body: AnalysisRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -108,7 +111,9 @@ class CompareResponse(BaseModel):
 
 
 @router.post("/compare", response_model=CompareResponse)
+@limiter.limit("10/minute")
 async def compare_analysis(
+    request: Request,
     body: CompareRequest,
     current_user: User = Depends(get_current_user),
     qdrant_client: AsyncQdrantClient = Depends(get_qdrant_client),

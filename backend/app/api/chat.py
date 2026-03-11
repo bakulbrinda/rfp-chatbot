@@ -11,6 +11,7 @@ from sqlalchemy import delete as sql_delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.core.utils.rate_limiter import limiter
 from app.core.llm.claude_client import generate_stream
 from app.core.llm.confidence import compute_confidence
 from app.core.llm.prompts import build_chat_system_prompt
@@ -34,7 +35,9 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 
 @router.post("", response_model=ChatResponse)
+@limiter.limit("30/minute")
 async def send_message(
+    request: Request,
     body: ChatRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -140,7 +143,9 @@ async def send_message(
 
 
 @router.post("/stream")
+@limiter.limit("30/minute")
 async def stream_message(
+    request: Request,
     body: ChatRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
