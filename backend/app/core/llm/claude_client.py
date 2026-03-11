@@ -3,6 +3,8 @@ from collections.abc import AsyncIterator
 from anthropic import AsyncAnthropic
 from qdrant_client.models import ScoredPoint
 
+from app.core.utils.query_sanitizer import wrap_query
+
 
 def _extract_citations(text: str, chunks: list[tuple[ScoredPoint, float]]) -> list[dict]:
     citations = []
@@ -44,9 +46,10 @@ async def generate_stream(
         for msg in history:
             messages.append({"role": msg["role"], "content": msg["content"]})
 
+    wrapped = wrap_query(query)
     user_content = (
-        f"<knowledge_base>\n{context}\n</knowledge_base>\n\n{query}"
-        if context_parts else query
+        f"<knowledge_base>\n{context}\n</knowledge_base>\n\n{wrapped}"
+        if context_parts else wrapped
     )
     messages.append({"role": "user", "content": user_content})
 
@@ -94,14 +97,14 @@ async def generate(
         for msg in history:
             messages.append({"role": msg["role"], "content": msg["content"]})
 
+    wrapped = wrap_query(query)
     if context_parts:
         user_content = (
             f"<knowledge_base>\n{context}\n</knowledge_base>\n\n"
-            f"{query}"
+            f"{wrapped}"
         )
     else:
-        # No relevant KB context — let Claude handle conversationally
-        user_content = query
+        user_content = wrapped
 
     messages.append({"role": "user", "content": user_content})
 

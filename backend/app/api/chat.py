@@ -15,9 +15,10 @@ from app.core.llm.claude_client import generate_stream
 from app.core.llm.confidence import compute_confidence
 from app.core.llm.prompts import build_chat_system_prompt
 from app.core.rag.evaluator import evaluate
-from app.core.rag.pipeline import run_chat_pipeline
+from app.core.rag.pipeline import FALLBACK_ANSWER, run_chat_pipeline
 from app.core.rag.reranker import rerank
 from app.core.rag.retriever import hybrid_search
+from app.core.utils.query_sanitizer import sanitize_query
 from app.db.session import get_db
 from app.dependencies import get_anthropic_client, get_cohere_client, get_current_user, get_qdrant_client
 from app.models.db_models import BotConfig, ChatMessage, ChatSession, QueryLog, User
@@ -82,9 +83,14 @@ async def send_message(
     )
     db.add(user_msg)
 
+    # Sanitize query before retrieval and generation
+    clean_message = sanitize_query(body.message)
+    if not clean_message:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid query.")
+
     # Run RAG pipeline with conversation history and dynamic system prompt
     pipeline_result = await run_chat_pipeline(
-        body.message, qdrant_client, cohere_client, anthropic_client,
+        clean_message, qdrant_client, cohere_client, anthropic_client,
         system_prompt=system_prompt,
         history=history or None,
     )
@@ -177,8 +183,13 @@ async def stream_message(
     recent = list(reversed(history_result.scalars().all()))
     history = [{"role": m.role, "content": m.content} for m in recent] or None
 
+    # Sanitize before saving or processing
+    clean_message = sanitize_query(body.message)
+    if not clean_message:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid query.")
+
     # Save user message
-    user_msg = ChatMessage(session_id=session.id, role="user", content=body.message)
+    user_msg = ChatMessage(session_id=session.id, role="user", content=clean_message)
     db.add(user_msg)
     session.updated_at = datetime.now(timezone.utc)
     await db.commit()
@@ -191,16 +202,16 @@ async def stream_message(
 
             # RAG retrieval
             from app.core.rag.pipeline import _CONVERSATIONAL
-            if _CONVERSATIONAL.match(body.message.strip()):
+            if _CONVERSATIONAL.match(clean_message.strip()):
                 relevant: list = []
                 found = True
             else:
                 raw = await hybrid_search(
-                    body.message, qdrant_client, cohere_client,
+                    clean_message, qdrant_client, cohere_client,
                     settings.QDRANT_COLLECTION, top_k=settings.RETRIEVAL_TOP_K,
                 )
                 if raw:
-                    reranked = await rerank(body.message, raw, cohere_client, top_n=settings.RERANK_TOP_N)
+                    reranked = await rerank(clean_message, raw, cohere_client, top_n=settings.RERANK_TOP_N)
                     passed, relevant = evaluate(reranked)
                     found = passed
                     if not passed:
@@ -209,11 +220,33 @@ async def stream_message(
                     relevant = []
                     found = False
 
+            # Hard stop — no LLM call when KB has nothing relevant
+            if not found and not _CONVERSATIONAL.match(clean_message.strip()):
+                db.add(QueryLog(
+                    session_id=session.id,
+                    user_id=current_user.id,
+                    query_text=clean_message,
+                    answer_found=False,
+                    confidence=None,
+                    module="chat",
+                ))
+                db.add(ChatMessage(
+                    session_id=session.id,
+                    role="assistant",
+                    content=FALLBACK_ANSWER,
+                    citations=[],
+                    confidence="not_found",
+                ))
+                await db.commit()
+                yield f"data: {json.dumps({'type': 'token', 'text': FALLBACK_ANSWER})}\n\n"
+                yield f"data: {json.dumps({'type': 'done', 'citations': [], 'confidence': 'not_found', 'found': False})}\n\n"
+                return
+
             # Stream Claude response
             full_text = ""
             citations: list = []
             async for event_type, text, event_citations in generate_stream(
-                body.message, relevant, system_prompt, anthropic_client, history
+                clean_message, relevant, system_prompt, anthropic_client, history
             ):
                 if event_type == "token":
                     full_text += text
@@ -235,7 +268,7 @@ async def stream_message(
             db.add(QueryLog(
                 session_id=session.id,
                 user_id=current_user.id,
-                query_text=body.message,
+                query_text=clean_message,
                 answer_found=found,
                 confidence=confidence if found else None,
                 module="chat",

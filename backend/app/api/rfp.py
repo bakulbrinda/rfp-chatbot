@@ -5,6 +5,7 @@ from qdrant_client import AsyncQdrantClient
 import cohere
 
 from app.config import settings
+from app.core.utils.query_sanitizer import sanitize_query
 from app.dependencies import get_qdrant_client, get_cohere_client, get_anthropic_client, get_current_user
 from app.models.db_models import User
 from app.core.rag.retriever import hybrid_search
@@ -31,13 +32,14 @@ async def rfp_respond(
     cohere_client: cohere.AsyncClient = Depends(get_cohere_client),
     anthropic_client: AsyncAnthropic = Depends(get_anthropic_client),
 ):
-    if not body.rfp_text.strip():
+    clean_rfp = sanitize_query(body.rfp_text)
+    if not clean_rfp:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="RFP text cannot be empty.")
 
-    results = await hybrid_search(body.rfp_text[:2000], qdrant_client, cohere_client, settings.QDRANT_COLLECTION, top_k=20)
-    reranked = await rerank(body.rfp_text[:500], results, cohere_client, top_n=12)
+    results = await hybrid_search(clean_rfp[:2000], qdrant_client, cohere_client, settings.QDRANT_COLLECTION, top_k=20)
+    reranked = await rerank(clean_rfp[:500], results, cohere_client, top_n=12)
 
-    answers = await run_rfp_respond(body.rfp_text, reranked, anthropic_client)
+    answers = await run_rfp_respond(clean_rfp, reranked, anthropic_client)
     return {"answers": answers, "total": len(answers)}
 
 
@@ -49,11 +51,12 @@ async def rfp_generate(
     cohere_client: cohere.AsyncClient = Depends(get_cohere_client),
     anthropic_client: AsyncAnthropic = Depends(get_anthropic_client),
 ):
-    if not body.client_brief.strip():
+    clean_brief = sanitize_query(body.client_brief)
+    if not clean_brief:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Client brief cannot be empty.")
 
-    results = await hybrid_search(body.client_brief[:2000], qdrant_client, cohere_client, settings.QDRANT_COLLECTION, top_k=25)
-    reranked = await rerank(body.client_brief[:500], results, cohere_client, top_n=15)
+    results = await hybrid_search(clean_brief[:2000], qdrant_client, cohere_client, settings.QDRANT_COLLECTION, top_k=25)
+    reranked = await rerank(clean_brief[:500], results, cohere_client, top_n=15)
 
-    rfp_doc = await run_rfp_generate(body.client_brief, reranked, anthropic_client)
+    rfp_doc = await run_rfp_generate(clean_brief, reranked, anthropic_client)
     return {"rfp": rfp_doc, "client_name": body.client_name}
