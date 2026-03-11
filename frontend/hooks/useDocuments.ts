@@ -11,6 +11,10 @@ export function useDocuments() {
   const query = useQuery({
     queryKey: QUERY_KEYS.documents,
     queryFn: () => documentsApi.list(),
+    refetchInterval: (data) => {
+      const items = (data?.state?.data as { items: Document[] } | undefined)?.items ?? [];
+      return items.some((d) => d.status === "processing") ? 3000 : false;
+    },
   });
 
   const deleteMutation = useMutation({

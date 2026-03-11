@@ -88,7 +88,7 @@ export function DocumentTable({ onPreview }: DocumentTableProps) {
                 </div>
               </div>
 
-              <DocumentStatusBadge status={doc.status} />
+              <DocumentStatusBadge status={doc.status} uploadedAt={doc.uploaded_at} />
 
               <span className="text-sm text-gray-500">{formatFileSize(doc.file_size_kb * 1024)}</span>
 

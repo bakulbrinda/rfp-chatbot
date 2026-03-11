@@ -1,0 +1,297 @@
+iMocha Integrations & API Documentation
+========================================
+
+## API Overview
+
+iMocha exposes a RESTful API (OpenAPI 3.0 specification) that allows clients to programmatically manage assessments, candidates, results, and webhooks. The API uses OAuth 2.0 (client credentials flow) for machine-to-machine authentication.
+
+Base URL: https://api.imocha.io/v3/
+Auth endpoint: https://auth.imocha.io/oauth/token
+
+Rate limits:
+- Standard tier: 100 requests/minute per client_id
+- Enterprise tier: 1,000 requests/minute per client_id
+- Burst: 2× limit for up to 10 seconds
+
+---
+
+## Authentication
+
+### Generating an Access Token
+
+```
+POST https://auth.imocha.io/oauth/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&client_id=YOUR_CLIENT_ID
+&client_secret=YOUR_CLIENT_SECRET
+&scope=assessments:read assessments:write candidates:write results:read
+```
+
+Response:
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIs...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "assessments:read assessments:write candidates:write results:read"
+}
+```
+
+Tokens expire in 1 hour. Clients should cache and refresh proactively.
+
+---
+
+## Core API Endpoints
+
+### Assessments
+
+**List Assessments**
+GET /v3/assessments
+Query params: page (default 1), per_page (default 20, max 100), status (active|archived), category
+
+**Get Assessment**
+GET /v3/assessments/{assessment_id}
+Returns full assessment config including sections, time limits, proctoring settings
+
+**Create Invitation (Test Link)**
+POST /v3/invitations
+```json
+{
+  "assessment_id": "asmt_abc123",
+  "candidate": {
+    "email": "candidate@example.com",
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "external_id": "ats_candidate_789"
+  },
+  "expiry_hours": 72,
+  "proctoring": {
+    "video": true,
+    "screen_share": false,
+    "browser_lockdown": true
+  },
+  "custom_data": {
+    "requisition_id": "REQ-2024-001",
+    "job_title": "Senior Python Developer"
+  }
+}
+```
+
+Response includes invitation_url — send this directly to the candidate.
+
+**Bulk Invite**
+POST /v3/invitations/bulk
+Accepts array of up to 500 candidate objects. Returns array of invitation objects with status (created | duplicate | error).
+
+**Get Results**
+GET /v3/invitations/{invitation_id}/results
+Returns: total_score, section_scores, time_taken, completion_status, proctoring_flags, answer_details (if enabled in account settings), report_url
+
+### Candidates
+GET /v3/candidates — search by email or external_id
+GET /v3/candidates/{candidate_id}
+DELETE /v3/candidates/{candidate_id} — GDPR erasure (irreversible; deletes all associated test data)
+
+### Reports
+GET /v3/invitations/{invitation_id}/report
+Returns a time-limited pre-signed URL (24-hour expiry) to the PDF/HTML candidate report.
+
+GET /v3/assessments/{assessment_id}/analytics
+Returns aggregated analytics: average score, score distribution (percentile buckets), pass rate, completion rate, average time taken, proctoring flag rate.
+
+---
+
+## Webhooks
+
+iMocha supports real-time event delivery via HTTPS webhooks.
+
+### Configuring Webhooks
+POST /v3/webhooks
+```json
+{
+  "url": "https://your-domain.com/imocha/webhook",
+  "events": ["invitation.started", "invitation.completed", "invitation.flagged", "invitation.expired"],
+  "secret": "your_hmac_secret_for_signature_verification"
+}
+```
+
+### Webhook Payload Structure
+```json
+{
+  "event": "invitation.completed",
+  "timestamp": "2024-03-15T10:23:45Z",
+  "data": {
+    "invitation_id": "inv_xyz789",
+    "assessment_id": "asmt_abc123",
+    "candidate": { "email": "...", "external_id": "..." },
+    "result": {
+      "status": "completed",
+      "total_score": 82.5,
+      "passed": true,
+      "time_taken_minutes": 38
+    },
+    "custom_data": { "requisition_id": "REQ-2024-001" }
+  }
+}
+```
+
+### Signature Verification
+Every webhook request includes header: X-iMocha-Signature: sha256=HMAC_SHA256(secret, raw_body)
+Clients MUST verify this signature to prevent replay attacks.
+
+### Retry Policy
+Failed deliveries (non-2xx response or timeout >30s) are retried with exponential backoff:
+- Attempt 1: immediately
+- Attempt 2: 5 minutes
+- Attempt 3: 30 minutes
+- Attempt 4: 2 hours
+- Attempt 5: 12 hours
+After 5 failed attempts, the webhook is marked as failed and an alert is sent to the account admin.
+
+---
+
+## ATS Integrations — Deep Dive
+
+### Greenhouse Integration
+
+Setup steps:
+1. In Greenhouse: Settings → Integrations → iMocha → Enable
+2. Copy the Greenhouse API key from Settings → Dev Center
+3. Paste into iMocha: Account → Integrations → Greenhouse → paste key → Save
+4. Map iMocha assessment stages to Greenhouse pipeline stages
+
+Once configured:
+- Greenhouse automatically appears in iMocha's "Send Assessment" flow
+- When a recruiter triggers "Send iMocha Assessment" from a candidate profile in Greenhouse, an invitation is created and emailed automatically
+- On completion, scores appear as a scorecard in Greenhouse and the candidate advances/declines based on pass/fail rules
+
+Data synced to Greenhouse scorecards:
+- Total score (0–100)
+- Pass/Fail status
+- Section scores (each section as a separate attribute)
+- Time taken
+- Link to full iMocha report PDF
+- Proctoring flags summary (if any)
+
+### Workday Integration (Workday Extend Certified)
+
+iMocha's Workday integration uses Workday's native orchestration framework (Workday Extend).
+
+Supported flows:
+1. **Recruiting trigger**: When a candidate reaches a configured stage in Workday Recruiting, iMocha automatically sends assessment invitation
+2. **Score writeback**: Completed assessment scores written back to candidate's requisition record as custom fields
+3. **HCM skill update**: For internal employees assessed via iMocha, validated skills auto-populate the Workday employee Skills section
+
+Authentication: Workday ISU (Integration System User) with scoped permissions. Credentials stored encrypted in iMocha Vault.
+
+Configuration complexity: Medium-High. Requires a Workday tenant admin + iMocha implementation engineer. Typical setup time: 3–5 business days.
+
+### SAP SuccessFactors Integration
+
+Integration uses SAP's BTP Integration Suite (formerly CPI) via iFlow.
+
+Supported flows:
+- Recruiting Management: trigger assessment from application status change
+- Score writeback to Application form
+- Learning and Development: trigger assessment as part of learning plan completion check
+
+iMocha provides a pre-built iFlow template (.zip) that SuccessFactors admins import into BTP Integration Suite.
+
+---
+
+## SCIM 2.0 User Provisioning
+
+iMocha supports SCIM 2.0 for automated user lifecycle management from IdPs (Okta, Azure AD, Ping).
+
+### Supported SCIM Operations
+- POST /scim/v2/Users — Create user
+- GET /scim/v2/Users?filter=email eq "user@example.com" — Find user
+- PATCH /scim/v2/Users/{id} — Update (name, email, active status)
+- DELETE /scim/v2/Users/{id} — Deprovision (user deactivated, not deleted; retains assessment history)
+
+### Role Mapping via SCIM Groups
+SCIM Groups map to iMocha roles:
+- Group "imocha-admin" → Role: Account Admin
+- Group "imocha-hiring-manager" → Role: Hiring Manager (can view results, cannot create assessments)
+- Group "imocha-recruiter" → Role: Recruiter (can send invitations, view results)
+- Group "imocha-viewer" → Role: Analytics Viewer (read-only reports access)
+
+---
+
+## SDK & Client Libraries
+
+iMocha provides official SDKs:
+
+- **JavaScript/TypeScript**: npm install @imocha/api-client
+- **Python**: pip install imocha-api
+- **Java**: Maven: com.imocha:api-client:2.1.0
+- **C#/.NET**: NuGet: iMocha.ApiClient 2.1.0
+
+Community-maintained:
+- Go (unofficial): github.com/community/imocha-go
+
+All official SDKs:
+- Auto-handle OAuth token refresh
+- Provide typed models for all API objects
+- Include retry logic with exponential backoff
+- Support async/await patterns in respective languages
+
+---
+
+## Embedded Assessments
+
+iMocha supports embedding the assessment player directly in a client's ATS or portal using an iframe or JavaScript SDK.
+
+### JavaScript SDK Embedding
+```html
+<script src="https://cdn.imocha.io/sdk/embed.js"></script>
+<div id="imocha-player"></div>
+<script>
+  iMochaEmbed.init({
+    container: '#imocha-player',
+    invitationToken: 'YOUR_INVITATION_TOKEN',
+    onCompleted: (result) => console.log('Score:', result.total_score),
+    onError: (err) => console.error(err),
+    theme: { primaryColor: '#F05A28', fontFamily: 'Inter' }
+  });
+</script>
+```
+
+Requirements:
+- Invitation must be created with embedded: true flag via API
+- Client domain must be whitelisted in iMocha account settings (CORS + CSP)
+- HTTPS required (HTTP blocked for security)
+
+---
+
+## Rate Limiting & Error Handling
+
+### HTTP Status Codes
+- 200 OK — Success
+- 201 Created — Resource created
+- 400 Bad Request — Validation error (response body contains field-level errors)
+- 401 Unauthorized — Invalid or expired access token
+- 403 Forbidden — Valid token but insufficient scope
+- 404 Not Found — Resource doesn't exist or belongs to different account
+- 409 Conflict — Duplicate invitation for same candidate+assessment within expiry window
+- 422 Unprocessable Entity — Request structure valid but business logic violation
+- 429 Too Many Requests — Rate limit exceeded (Retry-After header included)
+- 500 Internal Server Error — iMocha-side error (auto-logged; support ticket auto-created)
+
+### Error Response Format
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "candidate.email is required",
+    "details": [
+      { "field": "candidate.email", "message": "must be a valid email address" }
+    ],
+    "request_id": "req_20240315abc123"
+  }
+}
+```
+
+Always include request_id when contacting support.

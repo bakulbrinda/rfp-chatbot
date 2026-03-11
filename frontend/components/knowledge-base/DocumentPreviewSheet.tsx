@@ -37,7 +37,7 @@ export function DocumentPreviewSheet({ doc, onClose }: DocumentPreviewSheetProps
                     {doc.original_name}
                   </SheetTitle>
                   <div className="flex items-center gap-3 mt-1 flex-wrap">
-                    <DocumentStatusBadge status={doc.status} />
+                    <DocumentStatusBadge status={doc.status} uploadedAt={doc.uploaded_at} />
                     <span className="text-xs text-gray-400">{formatFileSize(doc.file_size_kb * 1024)}</span>
                     <span className="text-xs text-gray-400">Uploaded {formatDate(doc.uploaded_at)}</span>
                     {doc.chunk_count > 0 && (

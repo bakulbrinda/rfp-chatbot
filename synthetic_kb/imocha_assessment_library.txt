@@ -1,0 +1,217 @@
+iMocha Assessment Library — Detailed Catalog
+============================================
+
+## Overview
+
+iMocha maintains the industry's largest validated skills assessment library with 3,000+ tests across 500+ job roles. All assessments are:
+- Built by domain SMEs with 10+ years of industry experience
+- Psychometrically validated (content validity, construct validity, criterion validity)
+- Reviewed annually for relevance (questions retired if >2 years old in fast-moving domains)
+- Available in multiple difficulty tiers: Entry-Level, Mid-Level, Senior, Lead/Architect
+
+---
+
+## Programming Languages
+
+### Python
+- **Python Fundamentals** — Variables, data types, control flow, functions, OOP, exceptions
+- **Python for Data Science** — NumPy, Pandas, Matplotlib, statistical computing, data wrangling
+- **Python Django Developer** — MVT architecture, ORM, REST APIs with DRF, authentication, migrations
+- **Python FastAPI** — Async programming, Pydantic models, dependency injection, OpenAPI, middleware
+- **Python Machine Learning** — Scikit-learn, model evaluation, feature engineering, cross-validation
+- **Python Automation & Scripting** — File I/O, OS interaction, subprocess, cron automation, regex
+
+Sample Python Senior Developer assessment (45 min):
+- 5 MCQ (language internals, memory management, GIL)
+- 2 coding problems: one algorithmic (sorting variant) + one OOP design (design a cache)
+- 1 debugging problem (identify and fix 3 bugs in a 50-line async coroutine)
+
+### JavaScript / TypeScript
+- **JavaScript ES6+** — Arrow functions, destructuring, promises, async/await, modules
+- **TypeScript Developer** — Interfaces, generics, utility types, decorators, strict mode
+- **React.js Developer** — Hooks, state management, performance optimization (useMemo/useCallback), testing
+- **Node.js Backend** — Event loop, streams, Express/Fastify, REST + GraphQL, JWT auth
+- **Next.js Full Stack** — App Router, SSR/SSG/ISR, API routes, middleware, deployment
+- **Vue.js Developer** — Composition API, Vuex/Pinia, SFC, Vue Router
+
+### Java
+- **Core Java** — Collections, concurrency, streams, generics, JVM internals
+- **Java Spring Boot** — DI, Spring Security, JPA/Hibernate, microservices, Actuator
+- **Java Microservices** — Service mesh, Resilience4j, distributed tracing, Kafka integration
+- **Java Performance Tuning** — GC algorithms, heap profiling, JIT optimization, thread dumps
+
+### Other Languages
+- **C/C++** — Pointers, memory management, RAII, STL, multithreading
+- **Go (Golang)** — Goroutines, channels, interfaces, error handling, HTTP servers
+- **Rust** — Ownership, borrowing, lifetimes, async Tokio, WebAssembly
+- **Kotlin** — Coroutines, null safety, data classes, interop with Java, Ktor
+- **Swift / SwiftUI** — iOS development, UIKit vs SwiftUI, Combine, async/await
+- **PHP** — Laravel framework, Eloquent ORM, Blade templates, REST APIs
+- **Ruby on Rails** — MVC, ActiveRecord, Devise, Sidekiq, API mode
+
+---
+
+## Database & SQL
+
+- **SQL Fundamentals** — SELECT, JOIN, GROUP BY, subqueries, window functions
+- **Advanced SQL** — Query optimization, indexes, execution plans, CTEs, stored procedures
+- **PostgreSQL** — JSONB, full-text search, partitioning, replication, pg_stat_insights
+- **MySQL / MariaDB** — InnoDB internals, query cache, replication, stored procedures
+- **Oracle SQL & PL/SQL** — Packages, cursors, performance tuning, RAC basics
+- **MongoDB** — Aggregation pipeline, sharding, replica sets, schema design patterns
+- **Redis** — Data structures, persistence modes, cluster, Lua scripting, use cases
+- **Elasticsearch** — Mapping, analyzers, compound queries, aggregations, index lifecycle
+
+Coding challenge example (Advanced SQL):
+"Given a transactions table with columns (user_id, amount, type, created_at), write a single SQL query that returns the top 5 users by net transaction value (deposits minus withdrawals) in the last 30 days, along with their transaction count and average transaction size."
+
+---
+
+## Cloud & DevOps
+
+### AWS
+- **AWS Solutions Architect Associate** — EC2, S3, RDS, VPC, IAM, Lambda, CloudFormation
+- **AWS Solutions Architect Professional** — Multi-account strategy, disaster recovery, cost optimization
+- **AWS Developer Associate** — Lambda, API Gateway, DynamoDB, SQS/SNS, CodePipeline
+- **AWS DevOps Engineer Professional** — CI/CD, EKS, CloudWatch, Config, Systems Manager
+- **AWS Security Specialty** — KMS, Security Hub, GuardDuty, IAM policy evaluation, WAF
+
+### Microsoft Azure
+- **Azure Administrator (AZ-104 aligned)** — Azure AD, VMs, storage, networking, monitoring
+- **Azure Developer (AZ-204 aligned)** — App Service, Functions, Service Bus, Cosmos DB
+- **Azure DevOps Engineer** — Azure Pipelines, Repos, Artifacts, Test Plans
+- **Azure AI Engineer** — Cognitive Services, Azure ML, responsible AI principles
+
+### GCP
+- **GCP Associate Cloud Engineer** — Compute Engine, GKE, Cloud Storage, IAM, VPC
+- **GCP Professional Data Engineer** — BigQuery, Dataflow, Pub/Sub, Composer, Vertex AI
+
+### DevOps & Platform Engineering
+- **Docker & Container Fundamentals** — Images, Dockerfile best practices, volumes, networking
+- **Kubernetes Administrator (CKA-aligned)** — Pods, deployments, services, networking, RBAC, storage
+- **Kubernetes Developer (CKAD-aligned)** — ConfigMaps, Secrets, resource limits, probes, Helm
+- **Terraform (IaC)** — Modules, state management, remote backend, workspaces, provider versioning
+- **Ansible** — Playbooks, roles, variables, Jinja2 templates, idempotency, AWX
+- **Jenkins / GitLab CI / GitHub Actions** — Pipeline DSL, parallel stages, artifact management
+- **Observability (Prometheus + Grafana)** — Metrics, alert rules, PromQL, dashboards
+- **Linux System Administration** — Process management, networking, filesystem, bash scripting, systemd
+
+---
+
+## Data Science & AI/ML
+
+- **Statistics for Data Science** — Probability distributions, hypothesis testing, Bayesian inference, regression
+- **Machine Learning Foundations** — Supervised/unsupervised algorithms, model evaluation, overfitting
+- **Deep Learning** — Neural networks, backpropagation, CNNs, RNNs, transformers, PyTorch/TensorFlow
+- **NLP Engineering** — Text preprocessing, embeddings (Word2Vec, BERT), classification, named entity recognition
+- **MLOps** — Experiment tracking (MLflow), model serving (FastAPI/TensorFlow Serving), drift detection
+- **Data Engineering** — ETL pipelines, Apache Spark, Airflow, dbt, data modeling (star schema, Data Vault)
+- **Business Intelligence** — Power BI (DAX, Power Query), Tableau, Looker, data storytelling
+- **Generative AI & LLMs** — Prompt engineering, RAG architectures, fine-tuning, evaluation, responsible AI
+
+---
+
+## Cybersecurity
+
+- **CompTIA Security+ Aligned** — CIA triad, cryptography, network security, identity management
+- **CEH (Certified Ethical Hacker) Aligned** — Reconnaissance, scanning, exploitation, post-exploitation
+- **Penetration Testing** — Web app pen testing (OWASP Top 10), network pen testing, reporting
+- **SOC Analyst (Tier 1/2)** — Log analysis, SIEM (Splunk, QRadar), alert triage, incident response
+- **Cloud Security (AWS/Azure)** — Shared responsibility, IAM hardening, encryption, compliance
+- **Application Security** — SAST/DAST concepts, secure code review, threat modeling (STRIDE)
+- **Digital Forensics** — Disk imaging, memory analysis, chain of custody, tools (Autopsy, Volatility)
+- **Vulnerability Management** — CVE/CVSS scoring, Nessus, Qualys, patch prioritization
+
+---
+
+## ERP & Business Applications
+
+### SAP
+- **SAP ABAP Developer** — Reports, function modules, BAPIs, OOP ABAP, performance optimization
+- **SAP Basis Administrator** — System landscape, transport management, user administration, performance
+- **SAP SD / MM / FICO** — Configuration, customization, master data, integration points
+- **SAP S/4HANA Migration** — Simplification list, migration cockpit, Fiori apps
+
+### Salesforce
+- **Salesforce Administrator** — Data model, automation (Flow, Process Builder), reports, security model
+- **Salesforce Developer** — Apex, SOQL, LWC, triggers, integration patterns
+- **Salesforce Architect** — Integration design, data migration, governor limits, multi-org strategy
+
+### ServiceNow
+- **ServiceNow Administrator** — ITSM configuration, workflows, CMDB, catalog items
+- **ServiceNow Developer** — Scripting, GlideRecord, REST APIs, UI policies, Business Rules
+
+---
+
+## Cognitive & Behavioral Assessments
+
+### Cognitive Ability
+- **Numerical Reasoning** — Data interpretation, percentage calculations, financial reasoning (CEFR-style scoring)
+- **Verbal Reasoning** — Reading comprehension, inference, argument analysis
+- **Logical/Abstract Reasoning** — Patterns, sequences, spatial reasoning
+- **Critical Thinking** — Deductive reasoning, fallacy identification, decision quality
+- **Attention to Detail** — Error spotting, data accuracy, process compliance
+
+### Behavioral & Competency
+- **DiSC Profile Assessment** — Identifies Dominant / Influential / Steady / Conscientious profiles; generates team compatibility matrix
+- **Situational Judgment Tests (SJT)** — Role-specific (Customer Service, Sales, Management, Technical Lead) scenarios with expert-scored responses
+- **Leadership Potential Index** — 60-question assessment measuring growth mindset, adaptability, influence, execution
+- **Emotional Intelligence (EQi-aligned)** — Self-awareness, empathy, social skills, stress management
+- **Sales Aptitude** — Prospecting, objection handling, negotiation, CRM discipline
+
+### Language Proficiency
+- **Business English** — Reading, writing, grammar, vocabulary (A1–C2 CEFR aligned)
+- **English for IT Professionals** — Technical writing, email communication, documentation clarity
+- **Spanish / French / German / Mandarin** — Business communication level assessments
+
+---
+
+## Assessment Configuration Options
+
+### Question Settings
+- Time limit: global or per-question; can allow extra time for accessibility accommodations
+- Randomization: randomize question order, answer option order, or draw from question pools
+- Sectioned assessments: define separate pass/fail thresholds per section
+- Adaptive branching: set next question based on previous answer (Bayesian adaptive engine)
+
+### Proctoring Settings (per assessment)
+- Video proctoring: ON/OFF
+- Screen share recording: ON/OFF
+- Browser lockdown: ON (prevents tab switching and external apps)
+- AI anomaly detection: flags are scored 0–100 (configurable threshold for auto-flag)
+- Human review queue: flagged sessions routed to human reviewer dashboard
+
+### Candidate Experience
+- Mobile-friendly assessments (responsive, iOS/Android tested)
+- Screen reader compatible (WCAG 2.1 AA)
+- Multi-language UI (English, Spanish, French, German, Portuguese, Hindi, Mandarin)
+- Custom branding: client logo, color scheme, welcome message, completion redirect URL
+
+---
+
+## Custom Assessment Development
+
+For skills not covered in the standard library, iMocha offers:
+
+### Self-Authoring Tools
+- Question Editor: MCQ, coding, video response, file upload, rating scales
+- AI Question Generator: input a skill/topic + difficulty level → AI drafts 10 questions for human review
+- Rubric Builder: define scoring criteria for open-ended questions
+- Assessment Preview: simulate candidate experience before publishing
+
+### iMocha-Managed Custom Development
+- **Express Build** (2-week turnaround): 25–50 questions authored by iMocha SMEs based on client's job description and skill requirements. Cost: $3,000–$8,000
+- **Full Custom Build** (6–8 weeks): Full psychometric process — job analysis, item development, SME panel review, pilot testing, norming study. Cost: $15,000–$60,000
+- **Simulation Build**: Custom job simulations (e.g., "troubleshoot this broken AWS environment", "debug this production incident in our app") — highly immersive but expensive ($20,000–$150,000 depending on complexity)
+
+---
+
+## Assessment Quality Metrics
+
+iMocha publishes transparency reports on assessment quality:
+
+- **Item Difficulty Index (p-value)**: ideal range 0.3–0.7; items outside this range reviewed
+- **Discrimination Index (D)**: measures whether high-scorers outperform low-scorers on each item; D > 0.25 required
+- **Point-Biserial Correlation**: correlation between item score and total score; >0.2 required for retention
+- **Test-Retest Reliability**: Cronbach's alpha > 0.80 for all standard assessments
+- **Predictive Validity Studies**: iMocha has completed 12 predictive validity studies correlating assessment scores with 12-month performance ratings across 6 client partners; average r = 0.43

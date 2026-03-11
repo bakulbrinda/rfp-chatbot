@@ -1,0 +1,197 @@
+iMocha Competitive Positioning & Sales FAQ
+==========================================
+
+## How iMocha Compares to Key Competitors
+
+### iMocha vs. HackerRank
+
+**Summary**: iMocha is the broader enterprise platform; HackerRank is the developer-focused coding assessment tool.
+
+| Dimension | iMocha | HackerRank |
+|-----------|--------|------------|
+| Assessment breadth | 3,000+ tests (coding, cognitive, behavioral, ERP, language) | Primarily coding/technical |
+| Skills Intelligence | Full Skills Intelligence Cloud with workforce planning | Limited to developer skills |
+| Proctoring | AI proctoring with video, audio, behavior analytics | Basic proctoring |
+| Live interviews | CodeSpace (collaborative IDE + whiteboard) | CodePair |
+| HRIS/ATS integrations | 20+ native integrations | 10–15 integrations |
+| On-premises deployment | Yes (Enterprise) | No |
+| Language support | 40+ coding languages + 5 spoken languages | 30+ coding languages |
+| Behavioral assessments | Yes (DiSC, SJT, EQ, Leadership) | No |
+| Enterprise pricing | $80K–$500K+ | $40K–$250K+ |
+
+When to choose iMocha over HackerRank:
+- Client needs beyond developer assessment (e.g., non-tech roles, behavioral, language)
+- Client wants workforce intelligence + skills gap analysis, not just hiring assessments
+- Client needs SAP/Oracle/Salesforce ERP assessments
+- Client requires on-premises or dedicated tenant deployment
+
+When HackerRank might win:
+- Pure developer hiring with smaller scale (engineering-only use case)
+- Client already using GitHub Classroom or GitHub Copilot ecosystem
+- Lower budget, simpler needs
+
+---
+
+### iMocha vs. Codility
+
+**Summary**: Codility focuses narrowly on algorithmic coding challenges for software engineers; iMocha is a full-spectrum talent assessment platform.
+
+Key differences:
+- Codility's question library is almost exclusively algorithmic problems (competitive programming style)
+- iMocha's coding assessments include real-world scenarios: build a REST API, debug a Docker config, write a Terraform module
+- Codility has no behavioral or cognitive assessment capability
+- iMocha's proctoring is significantly more advanced than Codility's
+- Codility has strong brand recognition among engineering managers who went through it as candidates; iMocha is stronger at HR/TA buyer level
+
+---
+
+### iMocha vs. Mettl (Mercer | Mettl)
+
+**Summary**: Both are full-spectrum platforms; Mettl has strong brand in India, iMocha has stronger enterprise product globally.
+
+| Dimension | iMocha | Mettl |
+|-----------|--------|-------|
+| Parent company | Independent (VC-backed) | Mercer (Marsh & McLennan subsidiary) |
+| Skills Intelligence Cloud | Yes (full SIC product) | Limited; basic analytics |
+| Proctoring depth | More advanced AI proctoring | Comparable proctoring |
+| Psychometric depth | Strong technical + behavioral | Strong behavioral (Mercer heritage) |
+| Global support | Yes (24/7 for Enterprise) | Strong in India/APAC; limited elsewhere |
+| FedRAMP | In authorization | Not pursuing |
+| Competitive advantage | Skills intelligence + workforce planning | Mercer's consulting + benchmarking data |
+
+Talk track when Mettl is the incumbent:
+- "Mettl is a solid assessment tool, but it doesn't give you the Skills Intelligence layer — the ability to map your entire workforce's skills and plan for the future. iMocha SIC does that, and integrates directly with your Workday to write skills back into HCM."
+- "iMocha's proctoring is more advanced, with behavior-based AI (not just face recognition) — this is important for unmonitored remote assessments."
+
+---
+
+### iMocha vs. Vervoe
+
+**Summary**: Vervoe focuses on work-sample assessments for SMB/mid-market; iMocha is enterprise-focused with deeper skills intelligence.
+
+- Vervoe's differentiator: AI-graded open-ended responses and short video answers; strong for customer service, sales, and operations roles
+- iMocha advantage: deeper technical depth, HRIS integration, skills ontology, on-premises
+- Vervoe advantage: faster setup (hours vs days), lower price point, better candidate experience design
+
+---
+
+### iMocha vs. Pymetrics (Harver)
+
+**Summary**: Pymetrics/Harver focuses on neuroscience-based game assessments for behavioral fit and bias reduction; different from iMocha's skills-based approach.
+
+- Pymetrics strengths: high-quality behavioral/cognitive games, strong DE&I story, good for volume hiring (retail, banking frontline)
+- iMocha strengths: technical skills validation, coding assessments, skills intelligence
+- These tools are often complementary (some clients use Pymetrics for behavioral top-of-funnel + iMocha for technical validation)
+
+---
+
+## Frequently Asked Sales Questions
+
+### Pricing & Commercial
+
+**Q: Why is iMocha more expensive than some competitors?**
+A: iMocha's price reflects the depth of the platform — not just assessment delivery, but skills intelligence, workforce planning, and validated psychometric quality. When you factor in the total cost of hiring mistakes, skills mismatches, and unoptimized L&D spend, customers consistently achieve positive ROI within 12–18 months. Our average contract expansion rate is 127% (customers expand usage after seeing initial value).
+
+**Q: Can we do a pilot or proof of concept before signing?**
+A: Yes. iMocha offers a structured 30-day PoC with:
+- Up to 5 assessments deployed
+- Up to 200 candidate invitations
+- ATS integration with one system
+- Full reporting access
+- Success criteria defined upfront (e.g., reduce screening time by 40%, achieve 80% candidate satisfaction)
+PoC pricing: $3,000–$5,000 (credited toward annual contract if client signs).
+
+**Q: Do you offer month-to-month pricing?**
+A: No, iMocha's standard minimum commitment is 12 months. Month-to-month is not available for SaaS. On-premises contracts require a minimum 2-year term.
+
+**Q: What happens if we exceed our assessment volume?**
+A: Overage pricing applies. Standard overage rate: 20–30% above per-assessment rate in your contract. Enterprise contracts typically include 10% buffer with no overage charge.
+
+---
+
+### Technical Questions
+
+**Q: Can iMocha integrate with our custom in-house ATS?**
+A: Yes, via the iMocha REST API. We provide a full OpenAPI 3.0 specification, SDK libraries (Python, JS, Java, .NET), and implementation support. Timeline for custom integration: 2–6 weeks depending on complexity.
+
+**Q: Does iMocha support SSO with Azure AD?**
+A: Yes. iMocha supports SAML 2.0 and OIDC. Azure AD is fully supported with step-by-step configuration guides. Setup typically takes 30–60 minutes with your IT team.
+
+**Q: Can we white-label the candidate assessment experience?**
+A: Yes, all client plans include customizable branding on the candidate-facing portal: logo, colors, custom subdomain (e.g., assessments.yourcorp.com), welcome message, and completion redirect URL. Full white-labeling (removing iMocha branding entirely) is available for Enterprise+ plans.
+
+**Q: How does the AI proctoring handle candidates with disabilities?**
+A: iMocha provides accommodation modes:
+- Extended time (configurable per candidate)
+- Screen reader mode (WCAG 2.1 AA compliant)
+- Disable gaze tracking (for candidates with visual impairments)
+- Human review instead of AI for all flagged sessions (when client enables accommodation mode)
+Disability accommodations do not affect the scoring algorithm.
+
+**Q: What coding languages are supported for live coding interviews?**
+A: CodeSpace supports 42 languages including: Python 3.11, Java 21, JavaScript (Node 20), TypeScript, C++17, C#, Go 1.22, Rust, Kotlin, Swift, Ruby, PHP, Scala, R, MATLAB, and all major SQL dialects. New language versions are added within 30 days of LTS release.
+
+**Q: Can candidates take assessments on mobile devices?**
+A: Yes, all non-coding assessments are fully mobile-responsive (iOS Safari 16+, Chrome Android 110+). Coding assessments are not recommended on mobile (code editor UX degrades on small screens). Clients can restrict assessments to desktop-only via configuration.
+
+**Q: How accurate is iMocha's AI proctoring?**
+A: Based on internal validation studies:
+- True positive rate (correctly flagging actual cheating): 84%
+- False positive rate (flagging legitimate behavior as suspicious): 7%
+- All flags are soft flags — no candidate is automatically disqualified without human review
+- Clients can configure flag sensitivity (default: medium; options: low, medium, high, strict)
+
+---
+
+### Assessment Quality
+
+**Q: How do we know iMocha's questions are current and not outdated?**
+A: iMocha's content governance process:
+1. All questions are timestamped with a "review by" date (typically 18 months from creation)
+2. Domain-specific review cycles: cloud questions reviewed every 6 months (fast-moving); behavioral questions reviewed annually
+3. Item analytics: questions with low discrimination index (<0.2) or extreme difficulty (<20% or >85% pass rate) are flagged for replacement
+4. Client feedback loop: recruiters and hiring managers can flag specific questions; flagged questions reviewed within 5 business days
+
+**Q: Can we use our own questions / IP in iMocha?**
+A: Yes. The custom question editor supports:
+- Uploading questions via CSV bulk import
+- Authoring directly in the platform
+- Mixing client questions with iMocha library questions in the same assessment
+- Marking client questions as proprietary (not accessible by iMocha for QA or benchmarking)
+
+**Q: Do candidates get feedback after the assessment?**
+A: Configurable per assessment and per plan:
+- Default: candidates see "submitted" confirmation only (no score, no answers)
+- Optional: show overall score and section scores after submission
+- Optional: show correct answers and explanations (recommended for internal development, not for competitive hiring)
+- Full report: available to candidates via share link if client enables this
+
+**Q: How long does it take to get assessment results?**
+A:
+- Objective questions (MCQ, coding auto-graded): instant results (within 60 seconds of submission)
+- Video responses (AI-graded): 5–15 minutes
+- Video responses (human review queue): 24–48 hours (business hours)
+- Full proctoring review (flagged sessions): 24–48 hours for human review completion
+
+---
+
+### Implementation & Support
+
+**Q: We have a strict deadline — can we go live in 2 weeks?**
+A: For SaaS with no custom integrations: yes. Standard onboarding checklist:
+- Day 1: Account provisioned, SSO configured, first admin trained
+- Day 3–5: ATS integration via standard connector (Greenhouse/Lever) or webhook
+- Day 7: First assessments imported/built and tested
+- Day 10: Pilot with 10 internal candidates
+- Day 14: Full go-live
+
+For Workday or SAP SuccessFactors integration: minimum 3–4 weeks due to client IT dependencies.
+
+**Q: What languages is the admin portal available in?**
+A: English, French, Spanish, German, Portuguese (Brazil), Hindi, and Simplified Chinese. The candidate portal supports the same languages plus Dutch, Italian, Polish, Turkish, and Japanese.
+
+**Q: Do you have a mobile app for recruiters?**
+A: Not currently. The admin/recruiter portal is web-only (responsive for tablet use). A native iOS/Android app is on the H2 2025 roadmap. Candidates do not need an app — assessments run in mobile browser.
+
+**Q: What is iMocha's NPS?**
+A: Last measured NPS (Q4 2024): +48 (HR/TA buyers) and +31 (candidates). Industry benchmark for HR Tech SaaS: +32. iMocha consistently outperforms benchmark on the buyer side.

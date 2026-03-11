@@ -1,15 +1,19 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SessionList } from "@/components/chat/SessionList";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { LoadingPage } from "@/components/shared/LoadingPage";
-import { chatApi } from "@/lib/api/chat";
+import { chatApi, streamMessage } from "@/lib/api/chat";
 import { QUERY_KEYS } from "@/lib/constants";
 import { toast } from "sonner";
 import type { ChatMessage } from "@/types";
+
+type LocalMessage = ChatMessage & { error?: boolean };
+
+const STREAMING_ID = "streaming-assistant";
 
 export default function ChatSessionPage() {
   const params = useParams();
@@ -18,7 +22,9 @@ export default function ChatSessionPage() {
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>([]);
+  const [localMessages, setLocalMessages] = useState<LocalMessage[]>([]);
+  const [streamingId, setStreamingId] = useState<string | null>(null);
+  const [lastUserMessage, setLastUserMessage] = useState<string>("");
 
   const { data, isLoading } = useQuery({
     queryKey: [...QUERY_KEYS.session(sessionId)],
@@ -27,65 +33,115 @@ export default function ChatSessionPage() {
     staleTime: 30_000,
   });
 
-  // Reset optimistic messages when session changes
   useEffect(() => {
-    setOptimisticMessages([]);
+    setLocalMessages([]);
   }, [sessionId]);
 
   const baseMessages = data?.messages ?? [];
-  const allMessages = [...baseMessages, ...optimisticMessages];
+  const allMessages: LocalMessage[] = [...baseMessages, ...localMessages];
 
-  async function handleSend() {
-    const trimmed = input.trim();
+  const handleSend = useCallback(async (messageText?: string) => {
+    const trimmed = (messageText ?? input).trim();
     if (!trimmed || loading) return;
+
     setInput("");
     setLoading(true);
+    setLastUserMessage(trimmed);
 
-    const tempId = `opt-${Date.now()}`;
-    const userMsg: ChatMessage = {
-      id: tempId,
+    const tempUserId = `opt-user-${Date.now()}`;
+    const userMsg: LocalMessage = {
+      id: tempUserId,
       session_id: sessionId,
       role: "user",
       content: trimmed,
       created_at: new Date().toISOString(),
     };
-    setOptimisticMessages((prev) => [...prev, userMsg]);
+
+    // Remove any previous error message, add user message
+    setLocalMessages((prev) => [...prev.filter((m) => !m.error), userMsg]);
+
+    // Placeholder streaming bubble
+    const streamingMsg: LocalMessage = {
+      id: STREAMING_ID,
+      session_id: sessionId,
+      role: "assistant",
+      content: "",
+      created_at: new Date().toISOString(),
+    };
+    setLocalMessages((prev) => [...prev, streamingMsg]);
+    setStreamingId(STREAMING_ID);
 
     try {
-      const response = await chatApi.sendMessage({ message: trimmed, session_id: sessionId });
+      let finalContent = "";
+      let finalCitations: ChatMessage["citations"] = [];
+      let finalConfidence: import("@/types").Confidence | undefined = undefined;
 
-      const assistantMsg: ChatMessage = {
-        id: `opt-assistant-${Date.now()}`,
-        session_id: sessionId,
-        role: "assistant",
-        content: response.answer,
-        confidence: response.confidence,
-        citations: response.citations,
-        created_at: new Date().toISOString(),
-      };
+      for await (const event of streamMessage({ message: trimmed, session_id: sessionId })) {
+        if (event.type === "token") {
+          finalContent += event.text;
+          setLocalMessages((prev) =>
+            prev.map((m) =>
+              m.id === STREAMING_ID ? { ...m, content: finalContent } : m
+            )
+          );
+        } else if (event.type === "done") {
+          finalCitations = event.citations ?? [];
+          finalConfidence = event.confidence as import("@/types").Confidence | undefined;
+        } else if (event.type === "error") {
+          throw new Error(event.message);
+        }
+      }
 
-      setOptimisticMessages((prev) => [...prev, assistantMsg]);
+      // Replace streaming bubble with final message
+      setLocalMessages((prev) =>
+        prev.map((m) =>
+          m.id === STREAMING_ID
+            ? {
+                ...m,
+                id: `final-${Date.now()}`,
+                content: finalContent,
+                citations: finalCitations,
+                confidence: finalConfidence,
+              }
+            : m
+        )
+      );
 
-      // Invalidate to refresh from server in background
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.session(sessionId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.sessions });
     } catch {
-      toast.error("Failed to get a response. Please try again.");
-      // Remove the optimistic user message on failure
-      setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempId));
+      // Replace streaming bubble with error message
+      setLocalMessages((prev) =>
+        prev.map((m) =>
+          m.id === STREAMING_ID
+            ? {
+                ...m,
+                id: `error-${Date.now()}`,
+                content: "Something went wrong. Please try again.",
+                error: true,
+              }
+            : m
+        )
+      );
+      toast.error("Failed to get a response.");
     } finally {
+      setStreamingId(null);
       setLoading(false);
     }
-  }
+  }, [input, loading, sessionId, queryClient]);
+
+  const handleRetry = useCallback(() => {
+    if (lastUserMessage) {
+      setLocalMessages((prev) => prev.filter((m) => !m.error && m.id !== `opt-user-${sessionId}`));
+      handleSend(lastUserMessage);
+    }
+  }, [lastUserMessage, handleSend, sessionId]);
 
   return (
     <div className="flex h-full gap-0 -m-6">
-      {/* Session sidebar */}
       <div className="w-[280px] flex-shrink-0 border-r border-gray-100 bg-white flex flex-col">
         <SessionList />
       </div>
-
-      {/* Chat area */}
       <div className="flex-1 flex flex-col bg-[#F8F7FC] overflow-hidden">
         {isLoading ? (
           <LoadingPage />
@@ -93,13 +149,15 @@ export default function ChatSessionPage() {
           <>
             <ChatThread
               messages={allMessages}
+              streamingMessageId={streamingId}
               loading={loading}
               onSuggestion={(text) => setInput(text)}
+              onRetry={handleRetry}
             />
             <ChatInput
               value={input}
               onChange={setInput}
-              onSend={handleSend}
+              onSend={() => handleSend()}
               loading={loading}
             />
           </>
