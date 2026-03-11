@@ -1,7 +1,7 @@
 # Zero-Hallucination RAG + Security Hardening — Design Spec
 **Date:** 2026-03-11
 **Approach:** Approach B — Structured RAG + Verification Layer
-**Status:** Approved for implementation
+**Status:** COMPLETE — all 7 steps implemented and committed to `feature/zero-hallucination-security`
 
 ---
 
@@ -23,15 +23,17 @@ All changes are implemented sequentially on one branch and merged to `main` once
 
 ## Implementation Steps (sequential, all on `feature/zero-hallucination-security`)
 
-| Step | Description | Blocked by |
-|------|-------------|-----------|
-| 1 | Create branch + raise retrieval thresholds | — |
-| 2 | Query preprocessing + prompt injection defense | Step 1 |
-| 3 | Security hardening | Step 2 |
-| 4 | Q&A-aware ingestion + new Qdrant collection | Step 3 |
-| 5 | Post-generation Haiku verification layer | Step 4 |
-| 6 | Instruction set import with conflict detection | Step 5 |
-| 7 | RFP unanswered question flagging | Step 5 |
+| Step | Description | Status | Commit |
+|------|-------------|--------|--------|
+| 1 | Create branch + raise retrieval thresholds | ✅ Done | `1065cf9` |
+| 2 | Query preprocessing + prompt injection defense | ✅ Done | `d60a536` |
+| 3 | Security hardening (rate limits, audit log, headers) | ✅ Done | `6b5cbfe` |
+| 4 | Q&A-aware ingestion + new Qdrant collection `imocha_kb_v2` | ✅ Done | `dd5e0f7` |
+| 5 | Post-generation Haiku verification layer | ✅ Done | `b68f09d` |
+| 6 | Instruction set import with conflict detection | ✅ Done | `1472d5c` |
+| 7 | RFP unanswered question flagging | ✅ Done | `a226048` |
+
+**Post-merge action required:** Re-upload all 15 KB files through the admin panel to populate `imocha_kb_v2` with Q&A-aware chunks.
 
 ---
 
