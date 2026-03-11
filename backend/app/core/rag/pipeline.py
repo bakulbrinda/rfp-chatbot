@@ -15,8 +15,8 @@ from app.core.rag.retriever import hybrid_search
 
 
 FALLBACK_ANSWER = (
-    "That specific detail isn't in my knowledge base right now — I'd recommend checking "
-    "with the relevant iMocha team or the latest documentation."
+    "I don't have this information in my knowledge base. "
+    "Please contact your admin if this is something that should be covered."
 )
 
 # Patterns that indicate a purely conversational message (no KB lookup needed)
@@ -67,11 +67,10 @@ async def run_chat_pipeline(
         top_k=settings.RETRIEVAL_TOP_K,
     )
     if not raw_results:
-        # No vectors found at all — let Claude respond gracefully with history
-        result = await generate(query, [], system_prompt, anthropic_client, history)
+        # No vectors found at all — hard stop, no LLM call
         return ChatPipelineResult(
             found=False,
-            answer=result["text"],
+            answer=FALLBACK_ANSWER,
             citations=[],
             confidence="not_found",
         )
@@ -84,11 +83,10 @@ async def run_chat_pipeline(
     # Step 3: CRAG gate
     passed, relevant = evaluate(reranked)
     if not passed:
-        # Chunks exist but below relevance threshold — answer conversationally
-        result = await generate(query, [], system_prompt, anthropic_client, history)
+        # Chunks exist but below relevance threshold — hard stop, no LLM call
         return ChatPipelineResult(
             found=False,
-            answer=result["text"],
+            answer=FALLBACK_ANSWER,
             citations=[],
             confidence="not_found",
         )

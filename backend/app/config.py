@@ -41,9 +41,9 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int = 25
 
     # RAG tuning
-    CRAG_RELEVANCE_THRESHOLD: float = 0.40
+    CRAG_RELEVANCE_THRESHOLD: float = 0.65
     RETRIEVAL_TOP_K: int = 20
-    RERANK_TOP_N: int = 5
+    RERANK_TOP_N: int = 8
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
