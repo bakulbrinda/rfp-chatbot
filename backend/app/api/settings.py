@@ -6,6 +6,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth.password import hash_password
+from app.core.utils.instruction_validator import validate_instructions
 from app.db.session import get_db
 from app.dependencies import require_admin
 from app.models.db_models import BotConfig, RefreshToken, User
@@ -153,6 +154,18 @@ class BotConfigUpdate(BaseModel):
     bot_name: str | None = None
     instructions: str | None = None
     clear_instructions: bool = False  # pass true to explicitly wipe instructions
+    force: bool = False  # pass true to bypass conflict check (not recommended)
+
+
+class InstructionConflict(BaseModel):
+    pattern_name: str
+    matched_text: str
+    reason: str
+
+
+class InstructionConflictError(BaseModel):
+    detail: str
+    conflicts: list[InstructionConflict]
 
 
 @router.get("/bot-config", response_model=BotConfigOut)
@@ -172,6 +185,29 @@ async def update_bot_config(
     _=Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
+    # Validate new instructions for adversarial/conflicting content
+    if body.instructions and not body.clear_instructions and not body.force:
+        conflicts = validate_instructions(body.instructions)
+        if conflicts:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "message": (
+                        "The instruction set contains phrases that conflict with system security rules. "
+                        "Review the conflicts below and remove the flagged phrases, "
+                        "or pass force=true to override (not recommended)."
+                    ),
+                    "conflicts": [
+                        {
+                            "pattern_name": c.pattern_name,
+                            "matched_text": c.matched_text,
+                            "reason": c.reason,
+                        }
+                        for c in conflicts
+                    ],
+                },
+            )
+
     row = (await db.execute(select(BotConfig).where(BotConfig.id == 1))).scalar_one_or_none()
     if not row:
         row = BotConfig(id=1, bot_name="Maya", instructions=None)

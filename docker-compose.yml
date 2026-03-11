@@ -46,6 +46,9 @@ services:
     ports:
       - "6333:6333"
       - "6334:6334"
+    # NOTE: For production, add QDRANT__SERVICE__API_KEY via docker-compose.prod.yml
+    # or set it in the environment directly. Do NOT set it here — an empty value
+    # enables Qdrant auth with no key, blocking all requests.
     volumes:
       - qdrant_data:/qdrant/storage
     restart: unless-stopped

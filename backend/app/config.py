@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     # Vector DB
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_API_KEY: str = ""
-    QDRANT_COLLECTION: str = "imocha_kb"
+    QDRANT_COLLECTION: str = "imocha_kb_v2"
 
     # Relational DB
     DATABASE_URL: str
@@ -41,9 +41,9 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int = 25
 
     # RAG tuning
-    CRAG_RELEVANCE_THRESHOLD: float = 0.40
+    CRAG_RELEVANCE_THRESHOLD: float = 0.65
     RETRIEVAL_TOP_K: int = 20
-    RERANK_TOP_N: int = 5
+    RERANK_TOP_N: int = 8
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

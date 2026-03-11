@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 from pathlib import Path
 
@@ -44,6 +45,20 @@ async def upload_document(
             detail=f"File too large ({size_kb // 1024:.0f} MB). Maximum allowed size is {settings.MAX_FILE_SIZE_MB} MB.",
         )
 
+    # Duplicate detection: reject if identical content is already indexed
+    content_hash = hashlib.sha256(content).hexdigest()
+    existing = await db.execute(
+        select(Document).where(
+            Document.content_hash == content_hash,
+            Document.status == "indexed",
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This file has already been uploaded and indexed. Delete the existing document first if you want to re-index it.",
+        )
+
     ext_map = {
         "application/pdf": "pdf",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
@@ -61,6 +76,7 @@ async def upload_document(
         file_type=file_type,
         category=category,
         file_size_kb=size_kb,
+        content_hash=content_hash,
         storage_url=storage_url,
         status="processing",
         uploaded_by=current_user.id,
