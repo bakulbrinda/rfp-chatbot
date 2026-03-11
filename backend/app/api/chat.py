@@ -1,16 +1,23 @@
+import json
 import uuid
 from datetime import datetime, timezone
 
 import cohere
 from anthropic import AsyncAnthropic
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from qdrant_client import AsyncQdrantClient
 from sqlalchemy import delete as sql_delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.core.llm.claude_client import generate_stream
+from app.core.llm.confidence import compute_confidence
 from app.core.llm.prompts import build_chat_system_prompt
+from app.core.rag.evaluator import evaluate
 from app.core.rag.pipeline import run_chat_pipeline
+from app.core.rag.reranker import rerank
+from app.core.rag.retriever import hybrid_search
 from app.db.session import get_db
 from app.dependencies import get_anthropic_client, get_cohere_client, get_current_user, get_qdrant_client
 from app.models.db_models import BotConfig, ChatMessage, ChatSession, QueryLog, User
@@ -123,6 +130,127 @@ async def send_message(
         answer=pipeline_result.answer,
         citations=citations,
         confidence=pipeline_result.confidence,
+    )
+
+
+@router.post("/stream")
+async def stream_message(
+    body: ChatRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    qdrant_client: AsyncQdrantClient = Depends(get_qdrant_client),
+    cohere_client: cohere.AsyncClient = Depends(get_cohere_client),
+    anthropic_client: AsyncAnthropic = Depends(get_anthropic_client),
+):
+    """SSE streaming endpoint. Events: start | token | done | error"""
+
+    # Resolve session
+    session: ChatSession | None = None
+    if body.session_id:
+        result = await db.execute(
+            select(ChatSession).where(
+                ChatSession.id == uuid.UUID(body.session_id),
+                ChatSession.user_id == current_user.id,
+            )
+        )
+        session = result.scalar_one_or_none()
+
+    if not session:
+        session = ChatSession(user_id=current_user.id, title=body.message[:60])
+        db.add(session)
+        await db.flush()
+
+    # Bot config + system prompt
+    bot_cfg = (await db.execute(select(BotConfig).where(BotConfig.id == 1))).scalar_one_or_none()
+    system_prompt = build_chat_system_prompt(
+        bot_name=bot_cfg.bot_name if bot_cfg else "Maya",
+        custom_instructions=bot_cfg.instructions if bot_cfg else None,
+    )
+
+    # Conversation history
+    history_result = await db.execute(
+        select(ChatMessage)
+        .where(ChatMessage.session_id == session.id)
+        .order_by(ChatMessage.created_at.desc())
+        .limit(6)
+    )
+    recent = list(reversed(history_result.scalars().all()))
+    history = [{"role": m.role, "content": m.content} for m in recent] or None
+
+    # Save user message
+    user_msg = ChatMessage(session_id=session.id, role="user", content=body.message)
+    db.add(user_msg)
+    session.updated_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    session_id_str = str(session.id)
+
+    async def event_generator():
+        try:
+            yield f"data: {json.dumps({'type': 'start', 'session_id': session_id_str})}\n\n"
+
+            # RAG retrieval
+            from app.core.rag.pipeline import _CONVERSATIONAL
+            if _CONVERSATIONAL.match(body.message.strip()):
+                relevant: list = []
+                found = True
+            else:
+                raw = await hybrid_search(
+                    body.message, qdrant_client, cohere_client,
+                    settings.QDRANT_COLLECTION, top_k=settings.RETRIEVAL_TOP_K,
+                )
+                if raw:
+                    reranked = await rerank(body.message, raw, cohere_client, top_n=settings.RERANK_TOP_N)
+                    passed, relevant = evaluate(reranked)
+                    found = passed
+                    if not passed:
+                        relevant = []
+                else:
+                    relevant = []
+                    found = False
+
+            # Stream Claude response
+            full_text = ""
+            citations: list = []
+            async for event_type, text, event_citations in generate_stream(
+                body.message, relevant, system_prompt, anthropic_client, history
+            ):
+                if event_type == "token":
+                    full_text += text
+                    yield f"data: {json.dumps({'type': 'token', 'text': text})}\n\n"
+                elif event_type == "done":
+                    citations = event_citations
+
+            confidence = compute_confidence([s for _, s in relevant]) if relevant else "not_found"
+
+            # Save assistant message + query log
+            assistant_msg = ChatMessage(
+                session_id=session.id,
+                role="assistant",
+                content=full_text,
+                citations=citations,
+                confidence=confidence,
+            )
+            db.add(assistant_msg)
+            db.add(QueryLog(
+                session_id=session.id,
+                user_id=current_user.id,
+                query_text=body.message,
+                answer_found=found,
+                confidence=confidence if found else None,
+                module="chat",
+            ))
+            await db.commit()
+
+            yield f"data: {json.dumps({'type': 'done', 'citations': citations, 'confidence': confidence, 'found': found})}\n\n"
+
+        except Exception as exc:  # noqa: BLE001
+            yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 

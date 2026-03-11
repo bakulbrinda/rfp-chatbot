@@ -4,11 +4,10 @@ import { useRouter } from "next/navigation";
 import { SessionList } from "@/components/chat/SessionList";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { ChatInput } from "@/components/chat/ChatInput";
-import { chatApi } from "@/lib/api/chat";
+import { streamMessage } from "@/lib/api/chat";
 import { toast } from "sonner";
 import type { ChatMessage } from "@/types";
 
-// New chat page — shows empty state, then creates session on first message
 export default function ChatPage() {
   const router = useRouter();
   const [input, setInput] = useState("");
@@ -21,7 +20,6 @@ export default function ChatPage() {
     setInput("");
     setLoading(true);
 
-    // Optimistically show user message
     const tempUserMsg: ChatMessage = {
       id: "temp-user",
       session_id: "",
@@ -32,9 +30,14 @@ export default function ChatPage() {
     setMessages([tempUserMsg]);
 
     try {
-      const response = await chatApi.sendMessage({ message: trimmed });
-      // Navigate to the new session
-      router.push(`/chat/${response.session_id}`);
+      for await (const event of streamMessage({ message: trimmed })) {
+        if (event.type === "start") {
+          router.push(`/chat/${event.session_id}`);
+          return;
+        } else if (event.type === "error") {
+          throw new Error(event.message);
+        }
+      }
     } catch {
       toast.error("Failed to send message. Please try again.");
       setMessages([]);
@@ -44,24 +47,16 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-full gap-0 -m-6">
-      {/* Session sidebar */}
       <div className="w-[280px] flex-shrink-0 border-r border-gray-100 bg-white flex flex-col">
         <SessionList />
       </div>
-
-      {/* Chat area */}
       <div className="flex-1 flex flex-col bg-[#F8F7FC] overflow-hidden">
         <ChatThread
           messages={messages}
           loading={loading}
-          onSuggestion={(text) => { setInput(text); }}
+          onSuggestion={(text) => setInput(text)}
         />
-        <ChatInput
-          value={input}
-          onChange={setInput}
-          onSend={handleSend}
-          loading={loading}
-        />
+        <ChatInput value={input} onChange={setInput} onSend={handleSend} loading={loading} />
       </div>
     </div>
   );
