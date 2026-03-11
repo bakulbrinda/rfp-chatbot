@@ -1,3 +1,4 @@
+import hashlib
 import math
 import re
 import uuid
@@ -60,6 +61,7 @@ async def index_chunks(
     points: list[PointStruct] = []
     for chunk, dense_vec in zip(chunks, dense_vectors):
         sparse_vec = _build_sparse_vector(chunk.child_text)
+        chunk_hash = hashlib.sha256(chunk.child_text.encode()).hexdigest()
         payload = {
             "doc_id": chunk.doc_id,
             "doc_name": chunk.doc_name,
@@ -71,6 +73,8 @@ async def index_chunks(
             "child_text": chunk.child_text,
             "parent_text": chunk.parent_text,
             "date_ingested": chunk.date_ingested,
+            "content_type": chunk.content_type,
+            "chunk_hash": chunk_hash,
         }
         points.append(
             PointStruct(

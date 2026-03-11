@@ -53,6 +53,7 @@ class Document(Base):
     file_type: Mapped[str] = mapped_column(String(10), nullable=False)
     category: Mapped[str] = mapped_column(String(100), default="General")
     file_size_kb: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     storage_url: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="processing")
     chunk_count: Mapped[int] = mapped_column(Integer, default=0)

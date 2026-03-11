@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     # Vector DB
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_API_KEY: str = ""
-    QDRANT_COLLECTION: str = "imocha_kb"
+    QDRANT_COLLECTION: str = "imocha_kb_v2"
 
     # Relational DB
     DATABASE_URL: str
