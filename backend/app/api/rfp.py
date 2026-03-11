@@ -25,6 +25,9 @@ class RFPGenerateRequest(BaseModel):
     client_name: str | None = None
 
 
+_COVERAGE_WARNING_THRESHOLD = 0.30  # warn when >30% of questions are unanswered
+
+
 @router.post("/respond")
 @limiter.limit("10/minute")
 async def rfp_respond(
@@ -42,8 +45,34 @@ async def rfp_respond(
     results = await hybrid_search(clean_rfp[:2000], qdrant_client, cohere_client, settings.QDRANT_COLLECTION, top_k=20)
     reranked = await rerank(clean_rfp[:500], results, cohere_client, top_n=12)
 
-    answers = await run_rfp_respond(clean_rfp, reranked, anthropic_client)
-    return {"answers": answers, "total": len(answers)}
+    raw_answers = await run_rfp_respond(clean_rfp, reranked, anthropic_client)
+
+    # Tag each answer and split into answered / unanswered sections
+    answered: list[dict] = []
+    unanswered: list[dict] = []
+    for item in raw_answers:
+        item["not_in_kb"] = item.get("confidence") == "not_found"
+        if item["not_in_kb"]:
+            unanswered.append(item)
+        else:
+            answered.append(item)
+
+    total = len(raw_answers)
+    unanswered_ratio = len(unanswered) / total if total else 0.0
+    coverage_warning = unanswered_ratio > _COVERAGE_WARNING_THRESHOLD
+
+    return {
+        "answered": answered,
+        "unanswered": unanswered,
+        "total": total,
+        "answered_count": len(answered),
+        "unanswered_count": len(unanswered),
+        "coverage_warning": coverage_warning,
+        "coverage_warning_message": (
+            f"{len(unanswered)} of {total} questions ({unanswered_ratio:.0%}) could not be answered "
+            "from the knowledge base. Consider uploading additional documentation."
+        ) if coverage_warning else None,
+    }
 
 
 @router.post("/generate")
