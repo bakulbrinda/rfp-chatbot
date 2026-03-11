@@ -1,8 +1,10 @@
+import asyncio
 import json
 from anthropic import AsyncAnthropic
 from qdrant_client.models import ScoredPoint
 
 from app.core.llm.prompts import RFP_SYSTEM_PROMPT
+from app.core.llm.verifier import FULL_FALLBACK, verify_response
 
 RFP_RESPOND_PROMPT = """You are iMocha's pre-sales AI assistant.
 Answer each RFP question using ONLY the provided knowledge base context.
@@ -62,9 +64,24 @@ async def run_rfp_respond(
         raw = raw.strip()
 
     try:
-        return json.loads(raw)
+        answers: list[dict] = json.loads(raw)
     except json.JSONDecodeError:
         return []
+
+    # Parallel per-answer verification
+    async def _verify_answer(item: dict) -> dict:
+        answer_text = item.get("answer", "")
+        if not answer_text or item.get("confidence") == "not_found":
+            return item
+        verified_text, all_stripped, _ = await verify_response(
+            answer_text, chunks, anthropic_client
+        )
+        item["answer"] = FULL_FALLBACK if all_stripped else verified_text
+        if all_stripped:
+            item["confidence"] = "not_found"
+        return item
+
+    return list(await asyncio.gather(*[_verify_answer(a) for a in answers]))
 
 
 async def run_rfp_generate(

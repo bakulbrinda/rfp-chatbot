@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 import cohere
 from anthropic import AsyncAnthropic
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from qdrant_client import AsyncQdrantClient
 from sqlalchemy import delete as sql_delete, select
@@ -15,6 +15,7 @@ from app.core.utils.rate_limiter import limiter
 from app.core.llm.claude_client import generate_stream
 from app.core.llm.confidence import compute_confidence
 from app.core.llm.prompts import build_chat_system_prompt
+from app.core.llm.verifier import verify_response
 from app.core.rag.evaluator import evaluate
 from app.core.rag.pipeline import FALLBACK_ANSWER, run_chat_pipeline
 from app.core.rag.reranker import rerank
@@ -247,7 +248,9 @@ async def stream_message(
                 yield f"data: {json.dumps({'type': 'done', 'citations': [], 'confidence': 'not_found', 'found': False})}\n\n"
                 return
 
-            # Stream Claude response
+            # Buffer Claude response for verification before streaming to client
+            yield f"data: {json.dumps({'type': 'verifying'})}\n\n"
+
             full_text = ""
             citations: list = []
             async for event_type, text, event_citations in generate_stream(
@@ -255,11 +258,22 @@ async def stream_message(
             ):
                 if event_type == "token":
                     full_text += text
-                    yield f"data: {json.dumps({'type': 'token', 'text': text})}\n\n"
                 elif event_type == "done":
                     citations = event_citations
 
-            confidence = compute_confidence([s for _, s in relevant]) if relevant else "not_found"
+            # Haiku verification pass
+            verified_text, all_stripped, _ = await verify_response(
+                full_text, relevant, anthropic_client
+            )
+            if all_stripped:
+                verified_text = FALLBACK_ANSWER
+                citations = []
+                found = False
+
+            # Send verified text as a single token event
+            yield f"data: {json.dumps({'type': 'token', 'text': verified_text})}\n\n"
+
+            confidence = compute_confidence([s for _, s in relevant]) if relevant and not all_stripped else "not_found"
 
             # Save assistant message + query log
             assistant_msg = ChatMessage(

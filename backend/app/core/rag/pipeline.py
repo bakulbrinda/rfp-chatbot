@@ -9,6 +9,7 @@ from app.config import settings
 from app.core.llm.claude_client import generate
 from app.core.llm.confidence import compute_confidence
 from app.core.llm.prompts import CHAT_SYSTEM_PROMPT
+from app.core.llm.verifier import verify_response
 from app.core.rag.evaluator import evaluate
 from app.core.rag.reranker import rerank
 from app.core.rag.retriever import hybrid_search
@@ -94,13 +95,18 @@ async def run_chat_pipeline(
     # Step 4: Generate with context + history
     result = await generate(query, relevant, system_prompt, anthropic_client, history)
 
-    # Step 5: Confidence from rerank scores
+    # Step 5: Verify response against source chunks (Haiku fact-checker)
+    verified_text, all_stripped, unsupported_count = await verify_response(
+        result["text"], relevant, anthropic_client
+    )
+
+    # Step 6: Confidence from rerank scores
     scores = [score for _, score in relevant]
     confidence = compute_confidence(scores)
 
     return ChatPipelineResult(
-        found=True,
-        answer=result["text"],
-        citations=result["citations"],
-        confidence=confidence,
+        found=not all_stripped,
+        answer=verified_text,
+        citations=result["citations"] if not all_stripped else [],
+        confidence=confidence if not all_stripped else "not_found",
     )
