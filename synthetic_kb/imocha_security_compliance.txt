@@ -1,214 +1,213 @@
 iMocha Security, Compliance & Data Privacy
 ==========================================
+Source documents: Security.docx, Ethical AI.docx, AI Governance.docx
 
 ## Security Architecture Overview
 
-iMocha is built with a defense-in-depth security model across all product layers: infrastructure, platform, application, and data. Security is not an afterthought — it is embedded into the Software Development Lifecycle (SDLC) via DevSecOps practices.
+iMocha is built with a defense-in-depth security model across infrastructure, platform, application, and data layers. Security controls are embedded into the Software Development Lifecycle (SDLC) via DevSecOps practices.
 
-### Infrastructure Security
+---
 
-**Cloud Infrastructure (AWS Primary)**
-- Production runs on AWS (us-east-1 primary, eu-west-1 Frankfurt, ap-southeast-1 Singapore, ap-south-1 Mumbai)
-- Disaster Recovery (GCP us-central1) with RPO < 1 hour, RTO < 4 hours
-- All EC2/EKS nodes run in private subnets; no direct internet exposure
-- Load balancers: AWS Application Load Balancer with WAF (AWS WAF v2)
-  - OWASP Top 10 ruleset enabled
-  - Rate limiting: 1,000 requests/5 minutes per IP (configurable per endpoint)
-  - Geo-blocking available on request
-- DDoS protection: AWS Shield Advanced (managed by iMocha NOC)
-- VPC Flow Logs → CloudWatch → Splunk SIEM for real-time alerting
+## Encryption and Data Protection
 
-**Network Segmentation**
-- Three-tier architecture: Public (ALB, WAF), Application (Kubernetes worker nodes), Data (RDS, ElastiCache — no internet access)
-- All cross-tier communication over TLS 1.3 (TLS 1.0/1.1 disabled)
-- Security groups follow least-privilege: each service only allows traffic from specific sources on specific ports
-- VPC peering to client environments available for Enterprise + On-Premises customers
+### Encryption Standards
+- Data in transit: TLS 1.2+ (TLS 1.0 and 1.1 are disabled)
+- Data at rest: AES-256
+- Secrets management: Azure Key Vault (API keys, database credentials, TLS certificates — no secrets in environment variables or source code)
 
-**Secrets Management**
-- All credentials (DB passwords, API keys, TLS certificates) stored in HashiCorp Vault (Vault Enterprise, HA mode)
-- No secrets in environment variables, source code, or config files
-- Vault policies enforce least-privilege: each microservice has its own policy with access only to its secrets
-- Secret rotation automated for: DB credentials (30-day rotation), API tokens (90-day rotation)
+### Secrets Management — Azure Key Vault
+iMocha uses Azure Key Vault as its secrets management solution. All sensitive credentials and keys are stored in Azure Key Vault, including:
+- API keys and OAuth tokens for third-party integrations
+- Database credentials
+- TLS/SSL certificates
+- Encryption keys
 
-### Application Security
+Azure Key Vault ensures that no secrets are stored in environment variables, application source code, or configuration files. This applies to all iMocha environments including integration credentials for UKG, Power BI, and identity provider (SSO) connections.
 
-**Secure SDLC**
-- Threat modeling: all new features reviewed via STRIDE framework during design phase
-- SAST: Semgrep runs on every pull request; build fails on HIGH/CRITICAL findings
-- Dependency scanning: Snyk scans all Python/Node/Java dependencies daily; critical CVEs patched within 72 hours
-- DAST: OWASP ZAP baseline scan on every release candidate
-- Container scanning: Trivy scans all Docker images in CI; images with CRITICAL CVEs blocked from deployment
-- IaC scanning: Checkov validates all Terraform/Helm before apply
+Q: What does iMocha use for secrets management?
+A: iMocha uses Azure Key Vault for secrets management. All API keys, database credentials, and TLS certificates are stored in Azure Key Vault — never in environment variables or source code.
 
-**Authentication & Authorization**
-- Multi-factor authentication (MFA): mandatory for all admin users; optional (recommended) for recruiters/hiring managers
-- Supported MFA methods: TOTP (Google Authenticator, Authy), WebAuthn/FIDO2, SMS (discouraged)
-- Session management: access tokens expire in 15 minutes; refresh tokens in 7 days (rolling); immediate revocation supported
-- RBAC: 7 built-in roles (Account Admin, Billing Admin, Assessment Creator, Recruiter, Hiring Manager, Analytics Viewer, Candidate Reviewer); custom roles available in Enterprise
-- All privileged admin actions logged in immutable audit trail (CloudTrail + S3 with Object Lock)
+Q: How does iMocha manage its encryption keys and credentials?
+A: iMocha manages all encryption keys and credentials through Azure Key Vault. This covers integration API credentials, database passwords, and TLS certificates. No secrets are stored in application code or config files.
 
-**API Security**
-- All API endpoints authenticated (no public endpoints except OAuth token endpoint)
-- Input validation: Pydantic/Marshmallow schema validation on all request bodies
-- SQL injection prevention: ORM-only queries; raw SQL forbidden in application code
-- XSS prevention: Content-Security-Policy headers; React DOM escaping; output encoding
-- CSRF protection: SameSite=Strict cookies + CSRF tokens for browser-facing endpoints
-- API abuse monitoring: ML-based anomaly detection on API call patterns; auto-block on anomalous behavior
+### Data Classification
+iMocha classifies all data into four tiers:
+
+| Class | Description | Examples | Encryption |
+|-------|-------------|----------|------------|
+| C1 (Public) | Marketing content, documentation | Product pages, API docs | None required |
+| C2 (Internal) | Business operations data | Internal analytics | Encrypted at rest |
+| C3 (Confidential) | Client and candidate PII | Names, emails, assessment scores | AES-256 at rest + TLS 1.2+ in transit |
+| C4 (Restricted) | Proctoring media, biometric data | Video recordings | AES-256 + additional access controls + audit logs |
 
 ---
 
 ## Compliance Certifications
 
 ### ISO 27001:2022
-- Scope: iMocha SaaS platform development, operations, and support
-- Certifying body: BSI Group
-- Certificate valid until: March 2026 (annual surveillance audits)
-- Key ISMS controls: risk register reviewed quarterly, supplier risk management, incident response plan tested annually
+- iMocha is ISO 27001:2022 certified
+- Scope: SaaS platform development, operations, and support
+- Key ISMS controls: risk register, supplier risk management, incident response plan tested annually
 
 ### SOC 2 Type II
-- Trust Services Criteria: Security (required), Availability, Confidentiality
-- Audit period: October 2023 – September 2024 (annual)
-- Auditor: Deloitte & Touche LLP
-- No exceptions noted in last audit period
-- Report available to clients under NDA via iMocha Trust Portal (security@imocha.io)
+- iMocha holds a SOC 2 Type II certification
+- Trust Services Criteria covered: Security, Availability, Confidentiality
+- Audit conducted annually; report available to clients under NDA
 
-### GDPR (EU)
-- Legal bases for processing: Legitimate Interest (employer assessment activities), Contract (service provision to clients)
-- Data Processing Agreement (DPA): available at imocha.io/legal/dpa; includes Standard Contractual Clauses (SCCs) for cross-border transfers
-- EU-US Data Privacy Framework: certified; valid for transfers from EU/EEA to US
-- Data Protection Officer (DPO): appointed; contact: dpo@imocha.io
-- Privacy by Design: all new features require a Data Protection Impact Assessment (DPIA) for high-risk processing
+### WCAG 2.1 Level AA
+- The iMocha assessment player and admin portal are both WCAG 2.1 Level AA conformant
+- Accessibility accommodations: extended time, screen reader mode, and configurable proctoring settings for candidates with disabilities
 
-### CCPA (California)
-- Verified Opt-Out: "Do Not Sell My Personal Information" endpoint available
-- Data Subject Rights: access, deletion, portability requests processed within 45 days
-- Service Provider Agreement addendum available (client qualifies as a "business"; iMocha qualifies as "service provider")
+### EEOC and UGESP Compliance
+- iMocha's assessment design and scoring methodology aligns with EEOC Uniform Guidelines on Employee Selection Procedures (UGESP)
+- Assessments are designed and validated to avoid adverse impact on protected groups
+- Demographic impact monitoring is available via TA Analytics dashboards
+- iMocha's Diversity, Equity & Inclusion policy governs the design of assessment content and scoring rubrics
 
-### FedRAMP
-- Status: FedRAMP Ready (In Authorization Process)
-- System Security Plan (SSP) submitted; currently in Agency Authorization path with US Federal Agency partner
-- FIPS 140-2 validated cryptographic modules in use
-- Estimated ATO: Q4 2025
-
-### Other Standards
-- WCAG 2.1 Level AA: assessment player and admin portal both conformant (last tested: January 2024)
-- FERPA: iMocha can serve as a "school official" for educational institutions (used for university recruiting programs)
+### Uptime SLA
+- iMocha provides a 99.9% uptime SLA for the SaaS platform
+- Details on credits and measurement methodology are in the iMocha Service Level Agreement
 
 ---
 
-## Data Privacy & Residency
+## Access Control and Authentication
 
-### Data Classification
+### Access Control
+- Role-based access control (RBAC): administrators, recruiters, hiring managers, and analytics viewers have distinct permission sets
+- Principle of least privilege: each user and service has access only to what is required for their function
+- Admin access requires multi-factor authentication (MFA)
+- All privileged admin actions are logged in an immutable audit trail
 
-| Class | Description | Examples | Encryption |
-|-------|-------------|----------|------------|
-| C1 (Public) | Marketing content, docs | Product pages, API docs | None required |
-| C2 (Internal) | Business operations data | Internal analytics, staffing data | Encrypted at rest |
-| C3 (Confidential) | Client/candidate PII | Names, emails, assessment scores | AES-256 at rest + in transit |
-| C4 (Restricted) | Proctoring media, biometric data | Video recordings, face recognition templates | AES-256 + additional access controls + audit logs |
+### Authentication
+- Single Sign-On (SSO): supported via SAML 2.0 and OIDC/OAuth 2.0
+- Supported identity providers: Azure AD, Okta (see SSO.docx for full configuration details)
+- SCIM 2.0 user provisioning: supported for automated user lifecycle management from Azure AD and Okta
 
-### Data Residency Options
+### Session Management
+- Access tokens have a short expiry window; refresh tokens support rolling session continuity
+- Immediate token revocation is supported for terminated or suspended users
 
-**Default (Multi-tenant SaaS)**:
-- Clients select a primary region: US, EU, APAC, or India
-- All C3/C4 data remains within the selected region at rest
-- Replication to DR region within same jurisdiction (US → US-West, EU → EU-North)
-
-**Dedicated Tenant**:
-- Single-tenant databases in client's chosen region
-- No shared compute
-- Additional regions available: Canada (ca-central-1), Australia (ap-southeast-2), UAE (me-south-1), Brazil (sa-east-1)
-
-**On-Premises**:
-- All data stays within client's own network
-- No data ever transmitted to iMocha cloud (telemetry can be disabled)
-- Requires annual security review agreement with iMocha's security team
-
-### Retention Policies
-
-| Data Type | Default Retention | Minimum | Maximum |
-|-----------|------------------|---------|---------|
-| Candidate assessment results | 12 months | 3 months | Indefinite |
-| Video proctoring footage | 90 days | 30 days | 180 days |
-| Audio proctoring recordings | 90 days | 30 days | 180 days |
-| Chat/support logs | 24 months | 12 months | 36 months |
-| Audit logs | 36 months | 12 months | 7 years (for regulated industries) |
-| Deleted candidate data | 30-day soft delete then permanent | N/A | N/A |
-
-### Sub-Processors
-
-iMocha uses the following sub-processors for service delivery:
-
-| Sub-Processor | Purpose | Data Shared | Location |
-|---------------|---------|-------------|----------|
-| Amazon Web Services | Cloud infrastructure | All data (in-region only) | US/EU/APAC/India |
-| Google Cloud Platform | Disaster recovery | Encrypted backups | US |
-| Twilio SendGrid | Transactional email | Name, email | US |
-| Cloudflare | CDN, DNS, DDoS protection | IP addresses, request metadata (no PII) | Global |
-| Stripe | Payment processing | Billing contact info only | US/EU |
-| Zendesk | Customer support ticketing | Support contact info | US |
-
-Clients are notified of sub-processor changes with 30 days advance notice (email + in-app notification).
+For detailed access control procedures, refer to: Access Control & Termination policy, Acceptable Use policy.
 
 ---
 
-## Incident Response
+## Network and Infrastructure Security
 
-### Classification
-- **P0 (Critical)**: Data breach, platform-wide outage, proctoring system failure
-- **P1 (High)**: Partial outage affecting >20% of users, security vulnerability being actively exploited
-- **P2 (Medium)**: Degraded performance, non-critical feature outage
-- **P3 (Low)**: Minor bugs, feature requests
+- All production traffic encrypted with TLS 1.2+
+- Web Application Firewall (WAF): OWASP Top 10 ruleset enabled on all production endpoints
+- DDoS protection active on all external-facing services
+- Network segmentation: public-facing load balancers, application tier, and data tier are separated; no direct internet access to data tier
+- Vulnerability management: critical CVEs patched within defined SLA windows; refer to Vulnerability & Patch Management policy
+- Penetration testing: annual third-party penetration testing conducted; results reviewed and remediated per defined timelines
 
-### Response Times
-- P0: Incident Commander engaged within 15 minutes; status page updated within 30 minutes
-- P1: Lead engineer engaged within 30 minutes; client notification within 1 hour
-- P2: Acknowledged within 4 hours; resolution within 24 hours
-- P3: Tracked in roadmap; resolved in next sprint cycle
-
-### Data Breach Notification
-- Internal escalation: within 1 hour of confirmed breach
-- Client notification: within 24 hours of confirmed breach
-- Supervisory authority notification (GDPR): within 72 hours of becoming aware
-- Affected individual notification: within 72 hours if high risk
-
-### Security Contact
-- Responsible Disclosure / Bug Reports: security@imocha.io (PGP key available)
-- Bug Bounty Program: HackerOne private program (invite available to security researchers)
-  - Scope: *.imocha.io (excluding demo environments)
-  - Payouts: $100–$10,000 depending on severity
-  - Hall of Fame: publicly acknowledged researchers
+For network and infrastructure security details, refer to: Information Security policy, Physical Security policy, Antivirus policy.
 
 ---
 
-## Proctoring Ethics & Legal Considerations
+## Ethical AI and AI Governance
 
-iMocha's AI proctoring is designed to balance assessment integrity with candidate privacy and dignity.
+### AI Governance Framework
+iMocha's AI Governance policy governs the design, development, deployment, and monitoring of all AI-powered features including Tara AI (conversational interviews) and Skills Intelligence inference models.
 
-### What iMocha Proctoring Does
-- Face detection (presence verification) — confirms a human is taking the test
-- Gaze estimation — detects extended periods of looking off-screen (potential reference material)
-- Tab switching detection — browser API-based; no keylogger
-- Multiple faces detection — flags if another person enters camera frame
-- Audio monitoring (optional) — ambient audio analysis for conversation patterns (no speech-to-text)
-- Screen recording (optional) — records screen for post-review; not analyzed by AI in real-time
+Key governance principles:
+- Transparency: candidates are informed when AI is being used in the assessment or interview process
+- Human-in-the-Loop: no adverse employment decision is made solely on the basis of an AI output — a human review step is always available
+- Bias monitoring: AI models are reviewed for demographic bias during development and monitored post-deployment; bias audits are conducted by iMocha's internal AI ethics team
+- Auditability: all AI-generated scores and recommendations are logged with supporting evidence (transcript, score rationale); logs are retained per the Data Retention & Disposal policy
+- Explainability: scoring rubrics for AI interview assessments are documented and available to recruiters; candidates can request a review of their AI assessment score
 
-### What iMocha Proctoring Does NOT Do
-- No keystroke logging
-- No clipboard monitoring (beyond test-specific copy-paste restrictions)
-- No access to candidate's local files
-- No microphone-to-text transcription (GDPR/BIPA compliance)
-- No biometric identification (face recognition for re-ID only within a session; no cross-session matching or identity database)
+### Ethical AI Principles
+iMocha's Ethical AI policy defines the following commitments:
+- iMocha AI systems do not make final hiring or employment decisions — they provide recommendations and data to human decision-makers
+- Scoring is competency-based; regional accents, communication style variations, and non-native English speakers are not disadvantaged
+- Assessment content is reviewed by Subject Matter Expert (SME) panels before deployment to validate relevance, fairness, and freedom from cultural bias
+- Few-shot learning examples used in AI model training are reviewed and validated by SMEs for fairness before use
 
-### Regional Compliance Notes
-- **Illinois BIPA (Biometric Information Privacy Act)**: iMocha collects informed written consent before any proctoring in Illinois. Biometric data deleted after session.
-- **EU AI Act**: iMocha's proctoring system is classified as "limited risk" AI; transparency obligations met via candidate disclosure.
-- **China Personal Information Protection Law (PIPL)**: Data localization required; iMocha's China region (deployed on Alibaba Cloud in Beijing) stores all data locally.
-- **Quebec Law 25**: iMocha publishes a Privacy Impact Assessment for all Quebec-based clients on request.
+### AI Model Specifications (Tara AI)
+- Model: Azure OpenAI GPT-4o
+- Methodology: Retrieval-Augmented Generation (RAG), Human-in-the-Loop review, few-shot learning, SME-validated scoring rubrics
+- Accuracy: 90% alignment with human interviewer scoring benchmarks
+- Interview duration: 5–10 minutes per candidate
 
-### Proctoring Dispute Process
-1. Candidate or client disputes an AI proctoring flag
-2. Human reviewer in iMocha's Integrity Team reviews the relevant footage
-3. Decision issued within 2 business days
-4. If flag overturned, score remains valid and client is notified
-5. Disputed records retained for 6 months post-resolution for appeals
+For AI governance details, refer to: Ethical AI policy, AI Governance policy, Diversity Equity & Inclusion policy, EEOC Checklist.
+
+---
+
+## Data Privacy and Compliance
+
+### GDPR
+- iMocha is GDPR compliant
+- A Data Processing Agreement (DPA) including Standard Contractual Clauses (SCCs) is available for EU clients
+- Right to erasure: candidate data deletion requests are processed in compliance with GDPR Article 17
+- Data Protection Officer (DPO) is appointed; contact available via iMocha's security team
+
+### Data Retention
+- Candidate assessment data: retained for 12 months by default; configurable
+- Audit logs: retained for 36 months; extended retention available for regulated industries
+- Deleted data: 30-day soft delete followed by permanent deletion
+
+For data privacy details, refer to: Data Classification policy, Data Protection policy, Privacy Policy, GDPR Training, Data Retention & Disposal policy.
+
+### Incident Response
+- P0 (Critical — data breach, platform-wide outage): Incident Commander engaged within 15 minutes; status page updated within 30 minutes
+- P1 (High — partial outage or active exploit): Lead engineer engaged within 30 minutes; client notification within 1 hour
+- GDPR breach notification: supervisory authority notified within 72 hours of confirmed breach
+
+For incident response procedures, refer to: Information Security policy, Business Continuity & Disaster Recovery Plan, Disaster Recovery Testing Report.
+
+---
+
+## Security Policy Reference Index
+
+### Security / Access
+- Access Control & Termination policy
+- Acceptable Use policy
+- Information Security policy
+- Physical Security policy
+- Antivirus policy
+- Encryption & Key Management policy
+
+### Data / Privacy
+- Data Classification policy
+- Data Protection policy
+- Privacy Policy
+- GDPR Training
+- Data Retention & Disposal policy
+
+### Compliance
+- EEOC Checklist
+- Technical & Organizational Measures
+- POSH (Prevention of Sexual Harassment)
+- Diversity Equity & Inclusion policy
+
+### Operations
+- Change Management policy
+- Configuration & Asset Management policy
+- Vulnerability & Patch Management policy
+- Log Management & Monitoring policy
+
+### Development
+- Software Development Lifecycle (SDLC) policy
+- Hardening Policy
+
+### Disaster Recovery
+- Business Continuity & Disaster Recovery Plan
+- Disaster Recovery Testing Report
+
+### HR / Governance
+- Code of Conduct
+- Whistle Blower policy
+- Hiring Policy
+- HR Disciplinary Action policy
+- Occupational Health & Safety policy
+
+### Vendor
+- Vendor Management policy
+- List of Sub-Processors
+
+### Service
+- iMocha Service Level Agreement (SLA)
+
+### Incident
+- Information Security policy
+- Business Continuity & Disaster Recovery Plan

@@ -158,11 +158,13 @@ async def health_check():
 # Routers
 from app.api import auth, chat, knowledge_base, analysis, rfp, analytics  # noqa: E402
 from app.api import settings as settings_api  # noqa: E402
+from app.api import rfp_analyzer  # noqa: E402
 
 app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(knowledge_base.router)
 app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
 app.include_router(rfp.router, prefix="/api/rfp", tags=["rfp"])
+app.include_router(rfp_analyzer.router, prefix="/api/rfp-analyzer", tags=["rfp-analyzer"])
 app.include_router(analytics.router)
 app.include_router(settings_api.router)

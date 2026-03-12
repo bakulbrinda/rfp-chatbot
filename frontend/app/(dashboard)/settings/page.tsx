@@ -60,7 +60,7 @@ function CreateUserModal({ onClose }: CreateModalProps) {
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28]"
+              className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28]"
               placeholder="Full name"
             />
           </div>
@@ -71,7 +71,7 @@ function CreateUserModal({ onClose }: CreateModalProps) {
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28]"
+              className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28]"
               placeholder="email@company.com"
             />
           </div>
@@ -82,7 +82,7 @@ function CreateUserModal({ onClose }: CreateModalProps) {
               type="password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28]"
+              className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28]"
               placeholder="Min. 8 characters"
               minLength={8}
             />
@@ -92,7 +92,7 @@ function CreateUserModal({ onClose }: CreateModalProps) {
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value as "admin" | "sales" })}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28] bg-white"
+              className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28] bg-white"
             >
               <option value="sales">Sales / Pre-sales</option>
               <option value="admin">Admin</option>
@@ -204,7 +204,7 @@ function ActionMenu({ user, currentUserId }: ActionMenuProps) {
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="New password"
                 minLength={8}
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28]"
+                className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28]"
               />
               <div className="flex gap-2">
                 <button type="button" onClick={() => setResetOpen(false)} className="flex-1 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">Cancel</button>
@@ -279,7 +279,7 @@ function BotConfigTab() {
           onChange={(e) => setBotName(e.target.value)}
           maxLength={60}
           placeholder="Maya"
-          className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28] transition-all"
+          className="w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28] transition-all"
         />
         <p className="text-[10px] text-gray-400 mt-1">The name the bot uses to introduce itself.</p>
       </div>
@@ -299,7 +299,7 @@ function BotConfigTab() {
               "- When asked about pricing, always recommend scheduling a call with the sales team\n" +
               "- Focus answers on the APAC market context"
             }
-            className="w-full px-4 py-3.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28] transition-all resize-none placeholder:text-gray-400 leading-relaxed"
+            className="w-full px-4 py-3.5 text-sm text-gray-900 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#F05A28]/30 focus:border-[#F05A28] transition-all resize-none placeholder:text-gray-400 leading-relaxed"
           />
           <div className={cn(
             "absolute bottom-3 right-3 text-[10px] font-medium",

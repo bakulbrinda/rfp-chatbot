@@ -82,3 +82,47 @@ def wrap_query(text: str) -> str:
     an instruction by the LLM, even if a pattern slips through sanitization.
     """
     return f"<user_query>{text}</user_query>"
+
+
+# Maximum allowed length for company capability context
+MAX_CONTEXT_LENGTH = 20_000
+
+
+def sanitize_context(text: str) -> str:
+    """
+    Clean company_context input before it enters the AI call #3 system prompt.
+
+    Same injection-stripping logic as sanitize_query but with a higher character
+    limit appropriate for multi-paragraph capability descriptions.
+
+    Returns the cleaned string. Empty string means the input was blank or entirely
+    composed of injection patterns — callers should set no_context=True in this case.
+    """
+    if not text:
+        return ""
+
+    # 1. Truncate
+    text = text[:MAX_CONTEXT_LENGTH]
+
+    # 2. Strip control characters (keep newlines and tabs)
+    cleaned_chars = []
+    for ch in text:
+        cat = unicodedata.category(ch)
+        if ch in ("\n", "\t"):
+            cleaned_chars.append(ch)
+        elif cat.startswith("C"):
+            continue
+        else:
+            cleaned_chars.append(ch)
+    text = "".join(cleaned_chars)
+
+    # 3. Strip injection patterns
+    for pattern in _INJECTION_PATTERNS:
+        text = pattern.sub(" ", text)
+
+    # 4. Collapse whitespace
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = text.strip()
+
+    return text

@@ -134,3 +134,76 @@ class KBSuggestion(Base):
     examples: Mapped[list] = mapped_column(JSON, default=list)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     dismissed: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class RFPAnalysis(Base):
+    """Root object for one RFP/RFI analysis job."""
+    __tablename__ = "rfp_analyses"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="processing")
+    # status values: processing | complete | error
+    original_name: Mapped[str] = mapped_column(String(512), nullable=False)
+    file_type: Mapped[str] = mapped_column(String(10), nullable=False)
+    company_context: Mapped[str | None] = mapped_column(Text, nullable=True)
+    no_context: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Client profile fields (populated after AI call #1)
+    client_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    country: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    sector: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    tender_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    submission_deadline: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    evaluation_split: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    budget_indication: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    currency: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    language: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Raw Claude responses for auditability
+    raw_profile_response: Mapped[str | None] = mapped_column(Text, nullable=True)
+    raw_requirements_response: Mapped[str | None] = mapped_column(Text, nullable=True)
+    raw_classifications_response: Mapped[str | None] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+    user: Mapped["User"] = relationship()
+    requirements: Mapped[list["RFPRequirement"]] = relationship(back_populates="analysis", cascade="all, delete-orphan")
+
+
+class RFPRequirement(Base):
+    """A single requirement extracted from the uploaded document."""
+    __tablename__ = "rfp_requirements"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    analysis_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("rfp_analyses.id", ondelete="CASCADE"), nullable=False, index=True)
+    req_id: Mapped[str] = mapped_column(String(50), nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    raw_quote: Mapped[str | None] = mapped_column(Text, nullable=True)
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    priority: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    source_page: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    source_section: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    analysis: Mapped["RFPAnalysis"] = relationship(back_populates="requirements")
+    classification: Mapped["RFPClassification | None"] = relationship(back_populates="requirement", uselist=False, cascade="all, delete-orphan")
+
+
+class RFPClassification(Base):
+    """AI-generated scope classification for one requirement, with optional user override."""
+    __tablename__ = "rfp_classifications"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    requirement_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("rfp_requirements.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    scope: Mapped[str] = mapped_column(String(15), nullable=False)
+    # scope values: in | conditional | out
+    justification: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confidence: Mapped[float | None] = mapped_column(nullable=True)
+    conditions: Mapped[str | None] = mapped_column(Text, nullable=True)
+    user_override: Mapped[str | None] = mapped_column(String(15), nullable=True)
+    override_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    no_context: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+    requirement: Mapped["RFPRequirement"] = relationship(back_populates="classification")

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageSquare, Database, BarChart3, FileText, TrendingUp, ChevronLeft, ChevronRight, LogOut, Settings } from "lucide-react";
+import { MessageSquare, Database, BarChart3, FileText, TrendingUp, ChevronLeft, ChevronRight, LogOut, Settings, ScanSearch } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, getInitials } from "@/lib/utils";
 import { useUIStore } from "@/store/uiStore";
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/knowledge-base", label: "Knowledge Base", icon: Database },
   { href: "/analysis", label: "Analysis", icon: BarChart3 },
+  { href: "/rfp-analyzer", label: "RFP Analyzer", icon: ScanSearch },
   { href: "/rfp", label: "RFP", icon: FileText },
 ];
 

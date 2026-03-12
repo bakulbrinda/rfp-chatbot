@@ -1,204 +1,132 @@
-iMocha Skills Intelligence Cloud — Architecture & Use Cases
-============================================================
+iMocha Skills Intelligence — Functional Requirements & Reporting
+================================================================
+Source documents: SI_Fn_Requirement.docx, SI_Reporting/Analytics
 
-## What is the Skills Intelligence Cloud?
+## Skills Intelligence Overview
 
-The Skills Intelligence Cloud (SIC) is iMocha's workforce analytics product that transforms scattered skills data into a single, continuously updated skills intelligence layer for an enterprise. Unlike a traditional competency framework (static spreadsheet), SIC is a living, AI-powered graph that connects employees, roles, skills, learning resources, and business outcomes.
+iMocha's Skills Intelligence (SI) product line helps enterprises map, measure, and develop the skills of their existing workforce. SI is a post-hire, employee-facing product — it is distinct from iMocha's Talent Acquisition (TA) product line, which covers pre-hire screening.
 
-Key value proposition: "Know exactly what skills you have, what you're missing, and where to find them — inside your organization."
-
----
-
-## Core Architecture
-
-### Skills Taxonomy Engine
-At the heart of SIC is iMocha's proprietary Skills Ontology — a hierarchical graph of 30,000+ skills:
-
-Structure:
-- Domain (e.g., Software Engineering)
-  - Subdomain (e.g., Cloud Computing)
-    - Skill Family (e.g., AWS Services)
-      - Skill (e.g., AWS Lambda)
-        - Proficiency Levels: Awareness (1) | Working Knowledge (2) | Practitioner (3) | Expert (4) | Thought Leader (5)
-
-Key features:
-- Skill aliases: "Node.js" = "NodeJS" = "Node JS" (prevents false gaps)
-- Skill relationships: "AWS Lambda" → requires → "Python or JavaScript" → enables → "Serverless Architecture"
-- Skills inference rules: If proficient in "Kubernetes", likely has "Docker" at L3+
-- Market signals integration: Skills Ontology updated quarterly based on job posting analysis from 50M+ job ads (LinkedIn, Indeed, Glassdoor)
-
-### Data Ingestion Pipelines
-
-SIC ingests skills data from multiple sources to build a complete employee skills profile:
-
-1. **iMocha Assessments** (highest confidence, weight: 1.0)
-   - Directly validated skills with proficiency level from proctored assessment scores
-   - Score mapping: 0–49% → L1, 50–69% → L2, 70–84% → L3, 85–94% → L4, 95–100% → L5
-
-2. **HRIS / Employee Records** (weight: 0.6)
-   - Job title → mapped to expected skills profile via role-to-skills dictionary
-   - Years of experience in role → adds to L2/L3 inference
-   - Certifications listed in employee records (e.g., AWS-SAA, PMP) → mapped to skills at L3+
-
-3. **LMS Completions** (weight: 0.5)
-   - Course completions from Cornerstone, Degreed, LinkedIn Learning
-   - Module completions mapped to skills; completion time and score factor into confidence
-
-4. **Resume / LinkedIn Parsing** (weight: 0.4)
-   - AI NLP pipeline extracts skills from resume text, job history, and LinkedIn profiles
-   - Longer tenure in a role → higher inferred proficiency
-   - Self-stated skills discounted by 40% relative to assessed skills
-
-5. **Project & GitHub Contributions** (weight: 0.7)
-   - GitHub integration: analyzes repositories, languages used, commit frequency
-   - Jira/Confluence integration: project role and task descriptions parsed for skills
-
-6. **Manager Endorsements** (weight: 0.55)
-   - 360-feedback data from performance management systems (Workday, Lattice, 15Five)
-   - Peer endorsements weighted lower than manager endorsements
-
-### Confidence Scoring
-Every skill-employee relationship has a confidence score (0–100):
-- Confidence > 80: Shown as "Validated"
-- Confidence 50–79: Shown as "Inferred"
-- Confidence < 50: Shown as "Claimed" (self-reported only)
+SI is used by HR, L&D, and workforce planning teams to:
+- Build and manage competency frameworks for all roles
+- Identify skill gaps between current employee capabilities and target role requirements
+- Recommend and track upskilling interventions
+- Integrate with HRIS and LMS platforms to maintain a continuously updated skills profile
+- Produce workforce analytics and reporting for CHROs, HR BPs, and business leaders
 
 ---
 
-## Key SIC Features
+## SI Functional Requirements
 
-### 1. Employee Skills Profile (ESP)
-A 360-degree view of every employee's skills:
-- Validated vs Inferred vs Claimed skills
-- Proficiency level per skill (L1–L5)
-- Skill trend: growing, stable, declining (based on recency of evidence)
-- Skills comparison to current role benchmark
-- Suggested learning to reach next proficiency level
-- Next best roles (internal mobility opportunities matching skills)
+### Competency Framework Management
+- Admins can define a competency framework: a structured library of skills and competencies organized by role, job family, and proficiency level
+- Each competency is defined with a name, description, and proficiency scale (typically 1–5: Awareness, Basic, Proficient, Advanced, Expert)
+- Competency frameworks can be created from scratch or imported from an existing organizational framework via CSV or template
+- Role profiles are defined by mapping required competencies and minimum proficiency levels to each job title
+- Changes to competency frameworks are versioned; historical assessments are not retroactively rescored when frameworks change
 
-### 2. Skills Gap Analysis
-Two modes:
+### Employee Skills Profiles
+- Each employee has a Skills Profile that shows their assessed proficiency level per competency
+- Skills evidence sources:
+  - iMocha assessments (highest confidence — directly validated)
+  - HRIS data (job title, tenure, certifications from employee records)
+  - LMS completions (course and module completions mapped to competencies)
+  - Manager endorsements (where performance management integration is configured)
+- Skills profiles are continuously updated as new assessment results and LMS completions are ingested
+- Employees can view their own Skills Profile; managers can view profiles for their direct reports
 
-**Individual Mode**: Select an employee + target role → see the delta between current skills and role requirements. Output includes: missing skills, proficiency gaps on existing skills, estimated time to close gap, recommended learning paths.
+### Skill Gap Analysis
+- Individual gap analysis: given an employee and a target role, the system identifies which competencies are missing and which are below the required proficiency level
+- Team / department gap analysis: aggregate view across a team, department, or the full organization
+- Gap heatmap: visualizes skill coverage and gaps across departments and competency areas
+- Critical gap identification: flags roles or departments where skill coverage falls below a defined threshold (e.g., fewer than 2 employees at required proficiency for a critical competency)
+- Succession risk: identifies single points of failure (only one employee qualified for a critical role)
 
-**Organizational Mode**: Select a department, BU, or the entire org → aggregate gap analysis:
-- Heatmap: skills on X-axis, departments on Y-axis, color = gap severity
-- Risk score per department: "Cloud Engineering team has critical gap in Kubernetes (82% of target roles require L3+, current average is L1.8)"
-- Cost-to-close estimate: builds vs buy analysis (upskill cost vs external hire market rate)
+### Upskilling and Learning Path Recommendations
+- Based on an employee's gap analysis, the system recommends learning resources to close identified gaps
+- Learning recommendations are drawn from connected LMS content; SI does not host learning content itself
+- Admins can configure the mapping between competencies and specific courses or learning paths in the connected LMS
+- Progress tracking: SI tracks course completions from the LMS and updates the employee's Skills Profile accordingly
 
-### 3. Workforce Planning Dashboard
-Executive-level view for CHROs and VPs of Talent:
-
-**Bench Strength Analyzer**:
-- For each critical role, shows # of employees ready now (L3+ on required skills), ready in 6 months (with targeted L&D), and at risk (below L2)
-- Succession risk: identifies single points of failure (only 1 qualified person for a role)
-
-**Scenario Planning**:
-- Model "what if" scenarios: "If we expand our Data Engineering team by 20 headcount in 6 months, what skills do we already have internally vs need to hire?"
-- Skill supply/demand projection: trending skills the organization is building vs market demand growth
-
-**Skills Market Index**:
-- Benchmarks your organization's skills inventory against industry (by revenue band, geography, vertical)
-- Shows where you're ahead ("Your Python proficiency is 34% above industry average for Financial Services") and behind ("Your cloud-native skills index is 28% below BFSI industry benchmark")
-
-### 4. Internal Talent Marketplace
-- Employees with specific skills can be matched to open internal projects or roles
-- Managers post skill requirements for projects; SIC recommends best-fit employees
-- Employee can indicate learning interests; SIC surfaces relevant internal opportunities as they develop skills
-- Reduces time to fill internal roles by 35–60% (based on customer data)
-
-### 5. Skills-Based Hiring Intelligence
-- Job Description Analyzer: paste a JD → SIC extracts required skills, highlights redundant requirements ("10 years of React experience" — React is only 11 years old), suggests additions based on similar job market postings
-- Candidate-to-role fit score: given an assessed candidate's SIC profile, generates a numeric fit score (0–100) aligned to the target role's skill requirements
-- Bias detection: flags JD language patterns associated with demographic bias (e.g., "rockstar", "ninja", gendered language)
+### Assessment Campaigns
+- Admins can launch skills assessment campaigns targeting specific departments, role groups, or individuals
+- Campaign management: set start/end dates, send reminders for incomplete assessments, monitor completion rates
+- Assessment triggers: assessments can be scheduled periodically (e.g., annual recertification) or triggered by role change events from the HRIS
 
 ---
 
-## Implementation Guide for SIC
+## SI Reporting and Analytics
 
-### Phase 1: Data Foundation (Weeks 1–4)
-1. Install HRIS connector (Workday/SAP SuccessFactors API key)
-2. Import employee directory (name, email, job title, department, tenure)
-3. Upload/validate your existing competency framework or use iMocha's default taxonomy
-4. Map job titles to role profiles (iMocha provides 2,000+ pre-mapped role templates)
+### Employee-Level Reports
+- Individual Skills Profile report: full view of an employee's competencies, proficiency levels, and evidence sources
+- Skills gap report: shows gaps between employee's current profile and their current or target role requirements
+- Learning progress report: tracks completion of recommended learning paths
 
-### Phase 2: Skills Validation Campaign (Weeks 5–8)
-1. Design skills assessment campaigns per department (use iMocha's role-based assessment bundles)
-2. Launch assessments in batches (recommend 200–500 per week to avoid system strain)
-3. Monitor completion rates; send reminders for <80% completion rates
-4. First version of Skills Profile available after 60% completion
+### Team / Department Reports
+- Department skills inventory: aggregate view of all competencies held by a department, with coverage percentages
+- Skill gap summary: number and severity of gaps per competency across the department
+- Upskilling progress: tracks completion rates and gap closure over time for a defined group
 
-### Phase 3: Insights & Activation (Weeks 9–12)
-1. Configure Skills Gap Analysis thresholds and target role profiles
-2. Connect LMS (Cornerstone/Degreed) for learning activity ingestion
-3. Brief HR BPs and business leaders on Skills Dashboard interpretation
-4. Set up recurring assessment schedule (quarterly recommended for technical skills, annual for behavioral)
+### Workforce Planning Reports
+- Bench strength report: for each critical role, shows how many employees are ready now (at required proficiency), in progress (below proficiency but on a learning path), or at risk (no coverage)
+- Succession planning: identifies employees who are ready or near-ready to fill senior or critical roles
+- Scenario modeling: project the impact of role changes, headcount growth, or attrition on skill coverage
 
-### Phase 4: Continuous Intelligence (Ongoing)
-1. Automated re-assessment triggers (when skill evidence >12 months old)
-2. Quarterly taxonomy update (iMocha pushes updated ontology; review diff with HR team)
-3. Workforce Planning review cadence (recommended: quarterly with CHRO/VPs)
+### Analytics Dashboard (Admin)
+- Org-wide skills coverage: percentage of roles that have full competency coverage vs partial vs no coverage
+- Assessment participation: completion rates by department, manager, and time period
+- Skill trends: identifies skills improving or declining across the workforce over time
+- ROI indicators: tracks upskilling investment against measurable gap closure
 
----
-
-## Integration Architecture for SIC
-
-SIC integrates with the following system categories:
-
-**HRIS (bidirectional)**:
-- Reads: employee roster, job changes, terminations, certifications, performance scores
-- Writes: validated skills to employee record (if HRIS supports custom fields)
-
-**LMS/LXP (read)**:
-- Reads: course completions, module scores, learning paths enrolled
-- Supports: Cornerstone, Degreed, LinkedIn Learning, Saba, SumTotal (REST APIs)
-
-**Talent Marketplace (bidirectional)**:
-- Reads: internal job postings and project skill requirements
-- Writes: skill-match scores for internal candidates
-
-**Communication Tools (write)**:
-- Sends assessment invitations and reminders via: Email (SMTP/SendGrid), Slack, Microsoft Teams
-- SIC admins can configure per-department communication channel preferences
-
-**Business Intelligence (write)**:
-- Publishes aggregated skills data to enterprise BI tools via:
-  - Snowflake connector (direct data share)
-  - Power BI dataset API
-  - Tableau REST API
-  - Generic JDBC/ODBC for other tools
+### Reporting Formats
+- In-platform dashboards: real-time, filterable by department, role, competency, and time period
+- Export: reports exportable to PDF and CSV for offline use or submission to leadership
+- Power BI integration: SI data can be published to Power BI for custom enterprise reporting and visualization
 
 ---
 
-## ROI Framework for SIC
+## SI Integration Architecture
 
-iMocha customers typically achieve the following returns from SIC investment:
+### HRIS Integration
+SI integrates with HRIS platforms to ingest employee directory data and sync skills back to employee records.
 
-| Metric | Typical Improvement |
-|--------|---------------------|
-| Time to fill internal roles | 35–55% reduction |
-| External hiring cost | 15–30% reduction (more internal fills) |
-| Training budget efficiency | 20–40% improvement (targeted upskilling vs blanket programs) |
-| Skills-based promotion accuracy | 2.4× improvement (vs tenure-based) |
-| Attrition of high-skill employees | 18% reduction (career pathing clarity) |
-| New manager readiness | 1.8× faster (bench strength data enables proactive development) |
+Supported HRIS for SI:
+- UKG (UKG Pro): bidirectional integration — employee roster inbound, validated skills outbound to UKG employee record
+- Other HRIS platforms may be supported via REST API; confirm specific system support with the iMocha implementation team before committing
 
-Payback period: typically 8–18 months for mid-large enterprise deployments.
+HRIS data ingested by SI:
+- Employee roster: name, employee ID, email, job title, department, manager, start date
+- Job changes: role changes, promotions, transfers — trigger profile updates and re-assessment recommendations
+- Terminations: terminated employees are deactivated in SI (data retained per retention policy, not deleted)
+- Certifications: certification records in the HRIS are ingested and mapped to relevant competencies
+
+### LMS Integration
+SI connects to Learning Management Systems to ingest course completion data and map completions to competencies.
+
+LMS integration data flow:
+- SI reads: course completions, module scores, learning path enrollment status
+- SI does not write back to the LMS; integration is read-only from LMS
+- Competency-to-course mapping is configured by the SI admin in the iMocha platform
+
+### Power BI Integration
+- SI publishes aggregated skills data to Power BI via the Power BI dataset API
+- Custom dashboards and reports can be built in Power BI using SI data
+- Data refresh frequency is configurable (default: daily)
 
 ---
 
-## Privacy & Ethics in Skills Assessment
+## SI Policies and Governance
 
-iMocha's approach to responsible skills intelligence:
+### Employee Data and Privacy
+- Employees are notified before any skills assessment or profile-building activity
+- Skills profiles are used for development and planning purposes — not for automated adverse employment decisions
+- Employees can view their own profile and request corrections to inferred skills within 30 days
+- Data retention: employee skills data is retained for the duration of employment plus 12 months (configurable); deleted on verified right-to-erasure request
 
-1. **Consent-First**: Employees receive clear communication before any assessment or profile building. "What will be assessed, how it will be used, and who can see it" must be disclosed.
-
-2. **No Adverse Action Without Human Review**: SIC scores cannot trigger automated termination decisions. The platform is designed as a development and planning tool, not a punitive system.
-
-3. **Data Minimization**: Only skills relevant to current/target role profiles are assessed and surfaced. Irrelevant skills are not retained.
-
-4. **Audit Logs**: Every access to an employee's skills profile is logged. Employees can request a full access log under GDPR/CCPA.
-
-5. **Bias Audits**: iMocha conducts annual third-party bias audits on both the assessment content and the skills inference models to ensure they don't disadvantage protected groups.
-
-6. **Employee Access**: Employees can view their own Skills Profile, dispute inferred skills with evidence, and request corrections within 30 days.
+### Relevant Policy References
+For data handling, privacy, and compliance requirements related to SI, refer to:
+- Data Classification policy
+- Data Protection policy
+- Privacy Policy
+- GDPR Training documentation
+- Data Retention & Disposal policy
+- HR Disciplinary Action policy (for governance of how SI data may or may not be used in employment decisions)
