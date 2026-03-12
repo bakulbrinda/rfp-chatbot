@@ -1,297 +1,129 @@
-iMocha Integrations & API Documentation
-========================================
+iMocha Integrations — Technical Architecture & SSO
+===================================================
+Source documents: Technical 1.docx, SSO.docx
 
-## API Overview
+## Integration Overview
 
-iMocha exposes a RESTful API (OpenAPI 3.0 specification) that allows clients to programmatically manage assessments, candidates, results, and webhooks. The API uses OAuth 2.0 (client credentials flow) for machine-to-machine authentication.
+iMocha integrates with Applicant Tracking Systems (ATS), HRIS platforms, identity providers, and business intelligence tools. Integration capability varies by product module (TA vs SI) and by specific system.
 
-Base URL: https://api.imocha.io/v3/
-Auth endpoint: https://auth.imocha.io/oauth/token
-
-Rate limits:
-- Standard tier: 100 requests/minute per client_id
-- Enterprise tier: 1,000 requests/minute per client_id
-- Burst: 2× limit for up to 10 seconds
+IMPORTANT: Only mark a client's system as SUPPORTED if the exact system name appears in this document. Do not assume support for systems not listed here. For unlisted systems, the REST API is available for custom integration.
 
 ---
 
-## Authentication
+## ATS Integrations (Talent Acquisition)
 
-### Generating an Access Token
-
-```
-POST https://auth.imocha.io/oauth/token
-Content-Type: application/x-www-form-urlencoded
-
-grant_type=client_credentials
-&client_id=YOUR_CLIENT_ID
-&client_secret=YOUR_CLIENT_SECRET
-&scope=assessments:read assessments:write candidates:write results:read
-```
-
-Response:
-```json
-{
-  "access_token": "eyJhbGciOiJSUzI1NiIs...",
-  "token_type": "Bearer",
-  "expires_in": 3600,
-  "scope": "assessments:read assessments:write candidates:write results:read"
-}
-```
-
-Tokens expire in 1 hour. Clients should cache and refresh proactively.
-
----
-
-## Core API Endpoints
-
-### Assessments
-
-**List Assessments**
-GET /v3/assessments
-Query params: page (default 1), per_page (default 20, max 100), status (active|archived), category
-
-**Get Assessment**
-GET /v3/assessments/{assessment_id}
-Returns full assessment config including sections, time limits, proctoring settings
-
-**Create Invitation (Test Link)**
-POST /v3/invitations
-```json
-{
-  "assessment_id": "asmt_abc123",
-  "candidate": {
-    "email": "candidate@example.com",
-    "first_name": "Jane",
-    "last_name": "Doe",
-    "external_id": "ats_candidate_789"
-  },
-  "expiry_hours": 72,
-  "proctoring": {
-    "video": true,
-    "screen_share": false,
-    "browser_lockdown": true
-  },
-  "custom_data": {
-    "requisition_id": "REQ-2024-001",
-    "job_title": "Senior Python Developer"
-  }
-}
-```
-
-Response includes invitation_url — send this directly to the candidate.
-
-**Bulk Invite**
-POST /v3/invitations/bulk
-Accepts array of up to 500 candidate objects. Returns array of invitation objects with status (created | duplicate | error).
-
-**Get Results**
-GET /v3/invitations/{invitation_id}/results
-Returns: total_score, section_scores, time_taken, completion_status, proctoring_flags, answer_details (if enabled in account settings), report_url
-
-### Candidates
-GET /v3/candidates — search by email or external_id
-GET /v3/candidates/{candidate_id}
-DELETE /v3/candidates/{candidate_id} — GDPR erasure (irreversible; deletes all associated test data)
-
-### Reports
-GET /v3/invitations/{invitation_id}/report
-Returns a time-limited pre-signed URL (24-hour expiry) to the PDF/HTML candidate report.
-
-GET /v3/assessments/{assessment_id}/analytics
-Returns aggregated analytics: average score, score distribution (percentile buckets), pass rate, completion rate, average time taken, proctoring flag rate.
-
----
-
-## Webhooks
-
-iMocha supports real-time event delivery via HTTPS webhooks.
-
-### Configuring Webhooks
-POST /v3/webhooks
-```json
-{
-  "url": "https://your-domain.com/imocha/webhook",
-  "events": ["invitation.started", "invitation.completed", "invitation.flagged", "invitation.expired"],
-  "secret": "your_hmac_secret_for_signature_verification"
-}
-```
-
-### Webhook Payload Structure
-```json
-{
-  "event": "invitation.completed",
-  "timestamp": "2024-03-15T10:23:45Z",
-  "data": {
-    "invitation_id": "inv_xyz789",
-    "assessment_id": "asmt_abc123",
-    "candidate": { "email": "...", "external_id": "..." },
-    "result": {
-      "status": "completed",
-      "total_score": 82.5,
-      "passed": true,
-      "time_taken_minutes": 38
-    },
-    "custom_data": { "requisition_id": "REQ-2024-001" }
-  }
-}
-```
-
-### Signature Verification
-Every webhook request includes header: X-iMocha-Signature: sha256=HMAC_SHA256(secret, raw_body)
-Clients MUST verify this signature to prevent replay attacks.
-
-### Retry Policy
-Failed deliveries (non-2xx response or timeout >30s) are retried with exponential backoff:
-- Attempt 1: immediately
-- Attempt 2: 5 minutes
-- Attempt 3: 30 minutes
-- Attempt 4: 2 hours
-- Attempt 5: 12 hours
-After 5 failed attempts, the webhook is marked as failed and an alert is sent to the account admin.
-
----
-
-## ATS Integrations — Deep Dive
-
-### Greenhouse Integration
-
-Setup steps:
-1. In Greenhouse: Settings → Integrations → iMocha → Enable
-2. Copy the Greenhouse API key from Settings → Dev Center
-3. Paste into iMocha: Account → Integrations → Greenhouse → paste key → Save
-4. Map iMocha assessment stages to Greenhouse pipeline stages
-
-Once configured:
-- Greenhouse automatically appears in iMocha's "Send Assessment" flow
-- When a recruiter triggers "Send iMocha Assessment" from a candidate profile in Greenhouse, an invitation is created and emailed automatically
-- On completion, scores appear as a scorecard in Greenhouse and the candidate advances/declines based on pass/fail rules
-
-Data synced to Greenhouse scorecards:
-- Total score (0–100)
-- Pass/Fail status
-- Section scores (each section as a separate attribute)
-- Time taken
-- Link to full iMocha report PDF
-- Proctoring flags summary (if any)
-
-### Workday Integration (Workday Extend Certified)
-
-iMocha's Workday integration uses Workday's native orchestration framework (Workday Extend).
+### Oracle Recruiting Cloud (Oracle ORC)
+iMocha has a native integration with Oracle Recruiting Cloud (ORC).
 
 Supported flows:
-1. **Recruiting trigger**: When a candidate reaches a configured stage in Workday Recruiting, iMocha automatically sends assessment invitation
-2. **Score writeback**: Completed assessment scores written back to candidate's requisition record as custom fields
-3. **HCM skill update**: For internal employees assessed via iMocha, validated skills auto-populate the Workday employee Skills section
+- Assessment trigger: when a candidate reaches a configured stage in Oracle ORC, iMocha automatically sends an assessment invitation to the candidate
+- Score writeback: completed assessment scores (total score, section scores, pass/fail status) are written back to the candidate's application record in Oracle ORC
+- Status sync: assessment completion status is reflected in the ORC candidate pipeline
 
-Authentication: Workday ISU (Integration System User) with scoped permissions. Credentials stored encrypted in iMocha Vault.
-
-Configuration complexity: Medium-High. Requires a Workday tenant admin + iMocha implementation engineer. Typical setup time: 3–5 business days.
-
-### SAP SuccessFactors Integration
-
-Integration uses SAP's BTP Integration Suite (formerly CPI) via iFlow.
-
-Supported flows:
-- Recruiting Management: trigger assessment from application status change
-- Score writeback to Application form
-- Learning and Development: trigger assessment as part of learning plan completion check
-
-iMocha provides a pre-built iFlow template (.zip) that SuccessFactors admins import into BTP Integration Suite.
+Configuration requirements:
+- Oracle ORC tenant admin access required for initial setup
+- iMocha implementation engineer coordinates with the Oracle ORC admin during configuration
+- Typical setup time: 3–5 business days
 
 ---
 
-## SCIM 2.0 User Provisioning
+## HRIS Integrations (Skills Intelligence)
 
-iMocha supports SCIM 2.0 for automated user lifecycle management from IdPs (Okta, Azure AD, Ping).
+### UKG (UKG Pro)
+iMocha integrates with UKG Pro for Skills Intelligence (SI) use cases.
 
-### Supported SCIM Operations
-- POST /scim/v2/Users — Create user
-- GET /scim/v2/Users?filter=email eq "user@example.com" — Find user
-- PATCH /scim/v2/Users/{id} — Update (name, email, active status)
-- DELETE /scim/v2/Users/{id} — Deprovision (user deactivated, not deleted; retains assessment history)
+Supported data flows:
+- Inbound from UKG: employee roster (name, employee ID, email, job title, department, manager), job changes, terminations, certifications
+- Outbound to UKG: validated skill proficiency levels written back to the employee record in UKG Pro (requires UKG custom fields to be configured)
 
-### Role Mapping via SCIM Groups
-SCIM Groups map to iMocha roles:
-- Group "imocha-admin" → Role: Account Admin
-- Group "imocha-hiring-manager" → Role: Hiring Manager (can view results, cannot create assessments)
-- Group "imocha-recruiter" → Role: Recruiter (can send invitations, view results)
-- Group "imocha-viewer" → Role: Analytics Viewer (read-only reports access)
+Integration type: bidirectional REST API
+Authentication: UKG API credentials stored in Azure Key Vault; not stored in application code or environment variables
+Setup: requires UKG system administrator access and iMocha implementation engineer; typical setup time: 3–5 business days
+
+Note: UKG integration is part of the SI product module. It does not apply to TA (pre-hire) workflows unless specifically scoped.
 
 ---
 
-## SDK & Client Libraries
+## SSO and Identity Provider Integrations
 
-iMocha provides official SDKs:
+iMocha supports Single Sign-On (SSO) via SAML 2.0 and OIDC/OAuth 2.0. The following identity providers are supported with documented configuration guides.
 
-- **JavaScript/TypeScript**: npm install @imocha/api-client
-- **Python**: pip install imocha-api
-- **Java**: Maven: com.imocha:api-client:2.1.0
-- **C#/.NET**: NuGet: iMocha.ApiClient 2.1.0
+### Azure Active Directory (Azure AD)
+- Protocol: SAML 2.0 and OIDC
+- User provisioning: SCIM 2.0 supported for automated user lifecycle management (create, update, deprovision)
+- Role mapping: Azure AD security groups can be mapped to iMocha roles (Admin, Recruiter, Hiring Manager, Analytics Viewer)
+- Setup time: 30–60 minutes with IT team following iMocha's Azure AD SSO configuration guide
 
-Community-maintained:
-- Go (unofficial): github.com/community/imocha-go
+SCIM with Azure AD:
+- SCIM endpoint: provided in iMocha account settings
+- Deprovisioned users: deactivated in iMocha (not deleted); assessment history retained per data retention policy
+- Group-to-role mapping is configurable in iMocha admin panel
 
-All official SDKs:
-- Auto-handle OAuth token refresh
-- Provide typed models for all API objects
-- Include retry logic with exponential backoff
-- Support async/await patterns in respective languages
+### Okta
+- Protocol: SAML 2.0 and OIDC
+- User provisioning: SCIM 2.0 supported
+- Role mapping: Okta groups mapped to iMocha roles
+- Setup time: 30–60 minutes with IT team following iMocha's Okta SSO configuration guide
 
----
+### SSO Configuration Requirements (Both Providers)
+- SP-initiated and IdP-initiated SSO are both supported
+- Signed SAML assertions required; assertion encryption is optional but recommended
+- iMocha SP metadata (Entity ID, ACS URL, SLO URL) is available in iMocha admin → Settings → SSO
+- IdP metadata (Entity ID, SSO URL, certificate) must be provided to iMocha during setup
 
-## Embedded Assessments
-
-iMocha supports embedding the assessment player directly in a client's ATS or portal using an iframe or JavaScript SDK.
-
-### JavaScript SDK Embedding
-```html
-<script src="https://cdn.imocha.io/sdk/embed.js"></script>
-<div id="imocha-player"></div>
-<script>
-  iMochaEmbed.init({
-    container: '#imocha-player',
-    invitationToken: 'YOUR_INVITATION_TOKEN',
-    onCompleted: (result) => console.log('Score:', result.total_score),
-    onError: (err) => console.error(err),
-    theme: { primaryColor: '#F05A28', fontFamily: 'Inter' }
-  });
-</script>
-```
-
-Requirements:
-- Invitation must be created with embedded: true flag via API
-- Client domain must be whitelisted in iMocha account settings (CORS + CSP)
-- HTTPS required (HTTP blocked for security)
+For detailed SSO configuration steps, refer to: SSO.docx
 
 ---
 
-## Rate Limiting & Error Handling
+## Business Intelligence Integration
 
-### HTTP Status Codes
-- 200 OK — Success
-- 201 Created — Resource created
-- 400 Bad Request — Validation error (response body contains field-level errors)
-- 401 Unauthorized — Invalid or expired access token
-- 403 Forbidden — Valid token but insufficient scope
-- 404 Not Found — Resource doesn't exist or belongs to different account
-- 409 Conflict — Duplicate invitation for same candidate+assessment within expiry window
-- 422 Unprocessable Entity — Request structure valid but business logic violation
-- 429 Too Many Requests — Rate limit exceeded (Retry-After header included)
-- 500 Internal Server Error — iMocha-side error (auto-logged; support ticket auto-created)
+### Power BI
+iMocha supports integration with Microsoft Power BI for custom reporting and visualization.
 
-### Error Response Format
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "candidate.email is required",
-    "details": [
-      { "field": "candidate.email", "message": "must be a valid email address" }
-    ],
-    "request_id": "req_20240315abc123"
-  }
-}
-```
+Supported use cases:
+- Skills Intelligence data: aggregate skills inventory, gap analysis data, and upskilling progress published to Power BI via the Power BI dataset API
+- TA Analytics data: assessment completion rates, score distributions, and recruiter pipeline metrics available for Power BI consumption
 
-Always include request_id when contacting support.
+Data refresh: configurable (default: daily)
+Authentication: Power BI service account credentials stored in Azure Key Vault
+
+---
+
+## API Access (Custom Integrations)
+
+For systems not listed above, iMocha provides a REST API for custom integrations.
+
+- API specification: OpenAPI 3.0 (available to clients on request)
+- Authentication: OAuth 2.0 client credentials flow (machine-to-machine)
+- Webhooks: real-time event delivery for assessment lifecycle events (invitation sent, assessment started, completed, score available)
+
+Common API use cases:
+- Custom ATS integration: trigger assessment invitations from any ATS via the API; receive scores via webhook
+- Custom HRIS integration: programmatically sync employee data and write skills back to HRIS
+- Custom reporting: pull assessment data into a data warehouse for BI analysis
+
+---
+
+## Partner Certifications Relevant to Integrations
+
+- SAP: iMocha is recognized as an SAP Top 10 Partner — iMocha integrates with SAP SuccessFactors for TA and SI use cases
+- Workday: iMocha holds Workday Silver Partner certification — iMocha integrates with Workday Recruiting (TA) and Workday HCM (SI)
+- Oracle: iMocha integrates with Oracle Recruiting Cloud (ORC) for TA workflows
+
+Note: SAP SuccessFactors and Workday are supported integrations. When a client asks about SAP or Workday integration, mark as SUPPORTED. For specific integration scope (TA vs SI), refer to SI_Fn_Requirement.docx and TA_Fn_Requriment.docx respectively.
+
+---
+
+## Technical Architecture Notes
+
+### Encryption in Transit
+All API communication uses TLS 1.2+ (TLS 1.0 and 1.1 are disabled on all iMocha endpoints).
+
+### Secrets Management
+All integration credentials (OAuth tokens, API keys, SCIM tokens) are stored in Azure Key Vault. Credentials are never stored in environment variables, application code, or config files.
+
+### Data Residency
+Data exchanged via integrations remains within the client's configured data region. Cross-region data transfers are not performed without explicit client configuration.
+
+For technical architecture and infrastructure details, refer to: Technical 1.docx, Security.docx.
+For SSO configuration details, refer to: SSO.docx.

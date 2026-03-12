@@ -1,202 +1,88 @@
-iMocha Product Overview — Comprehensive Guide
-=============================================
+iMocha Product Overview — Company & Platform Guide
+===================================================
+Source documents: Company_Overview.docx
 
 ## What is iMocha?
 
-iMocha is an AI-powered skills intelligence platform that helps enterprises assess, validate, and develop talent at scale. Founded in 2015, iMocha serves over 500 enterprise clients across 70+ countries, including Fortune 500 companies, staffing agencies, and global IT firms. The platform combines assessment science, AI proctoring, and skills data to power better hiring, L&D, and workforce planning decisions.
+iMocha is an AI-powered skills intelligence and talent assessment platform that helps enterprises make data-driven hiring and workforce development decisions. iMocha serves 300+ customers globally, including 15 Fortune 500 companies, across industries including technology, financial services, staffing, manufacturing, and professional services.
 
-iMocha's core mission: "Make every talent decision data-driven and skills-first."
+iMocha has been recognized with the following industry awards:
+- Brandon Hall Gold Award for excellence in talent assessment technology
+- SAP Top 10 Partner recognition
+- Workday Silver Partner certification
 
-## Core Platform Modules
-
-### 1. Talent Assessment Platform
-iMocha's flagship product enables organizations to build, deploy, and score technical, cognitive, and behavioral assessments at scale.
-
-Key capabilities:
-- Library of 3,000+ ready-to-use skills tests (coding, cybersecurity, data science, cloud, ERP, language, soft skills)
-- Custom question authoring with AI-assisted item generation
-- Adaptive assessment engine that adjusts difficulty in real-time based on candidate performance
-- Multi-format questions: MCQ, coding challenges (40+ languages), video responses, simulations, case studies
-- AI-powered proctoring: eye-tracking, tab-switch detection, face recognition, audio monitoring, plagiarism detection
-- Real-time scoring and instant candidate feedback reports
-
-Supported test categories:
-- Programming & coding (Python, Java, JavaScript, C++, SQL, R, etc.)
-- Data Science & AI/ML (statistical reasoning, ML model evaluation, data wrangling)
-- Cloud & DevOps (AWS, Azure, GCP, Kubernetes, Terraform, Docker)
-- Cybersecurity (ethical hacking, SOC analysis, vulnerability assessment, OWASP)
-- ERP & Business Applications (SAP, Salesforce, ServiceNow, Oracle, Workday)
-- Cognitive abilities (numerical, verbal, logical, critical thinking)
-- Behavioral & leadership competencies (DiSC-aligned profiles, situational judgment)
-- Language proficiency (English, Spanish, French, German, Mandarin — CEFR aligned)
-
-### 2. Skills Intelligence Cloud (SIC)
-iMocha's second-generation product that goes beyond assessment into continuous skills mapping.
-
-- Builds a living Skills Taxonomy for the entire organization — maps employees to skills, proficiency levels, and skill gaps in real-time
-- Integrates with HRIS (Workday, SAP SuccessFactors, Oracle HCM) to create a unified employee skills profile
-- Skills Gap Analysis: benchmarks current workforce skills against industry standards, competitor profiles, and future role requirements
-- Workforce Planning dashboards: visualize bench strength, succession risk, and skills distribution by department, geography, and business unit
-- AI Skills Inference: analyzes resume text, LinkedIn profiles, project history, and learning completions to infer skills without requiring a formal test
-- Skills Ontology: a proprietary graph of 30,000+ skills with parent-child relationships, synonyms, and cross-domain mappings
-
-### 3. Coding Interview Platform (CodeSpace)
-A browser-native collaborative coding environment for live technical interviews.
-
-- Real-time collaborative IDE with 40+ languages and framework support
-- Whiteboard mode for system design interviews
-- Pair programming mode where interviewers can type alongside candidates
-- Pre-built coding problem library (Easy / Medium / Hard, tagged by domain and company)
-- AI code analysis: automatically detects brute-force vs optimal solutions, flags time/space complexity
-- Interview recording and playback for debrief and compliance
-
-### 4. Talent Analytics
-- Predictive Hire Quality Index: correlates assessment scores with 6-month and 12-month performance ratings
-- Diversity & Inclusion analytics: tracks demographic breakdown at each funnel stage, flags potential bias in question sets
-- Assessment Effectiveness Reports: item-level analytics (difficulty index, discrimination index, point-biserial correlation)
-- Benchmark comparison: compare your candidate pool scores against iMocha's global database of 50M+ assessments
+iMocha's platform is built on two core product lines:
+1. Talent Acquisition (TA) — pre-hire assessment, AI interviews, candidate screening
+2. Skills Intelligence (SI) — employee competency mapping, skill gap analysis, upskilling, workforce development
 
 ---
 
-## Deployment Modes
+## Talent Acquisition (TA) Product Line
 
-iMocha supports three deployment models:
+The TA product line covers the full pre-hire assessment lifecycle. It is designed for hiring teams, recruiters, pre-sales engineers, and talent acquisition leads.
 
-1. **SaaS (Cloud)** — Fully hosted on AWS (primary) with GCP as DR. Multi-tenant architecture with logical data isolation. 99.9% uptime SLA. Data centers in US-East, EU-West (Frankfurt), APAC (Singapore), and India (Mumbai).
+### Core TA Use Cases
+- Pre-hire technical screening: assess candidates before interview with role-specific tests
+- AI-powered conversational interviews: automated first-round interviews via Tara AI
+- ATS-integrated assessment workflows: trigger assessments directly from the applicant tracking system
+- Candidate ranking and shortlisting: score-based ranking for efficient recruiter review
+- Diversity and inclusion analytics: funnel-stage demographic reporting and bias detection
 
-2. **Private Cloud / Dedicated Tenant** — Single-tenant deployment in iMocha's cloud for clients requiring data sovereignty. Dedicated compute, storage, and database. Available in additional regions on request.
+### Tara AI — Conversational AI Interview Platform
+Tara is iMocha's AI-powered interviewer. Tara conducts structured conversational interviews autonomously, without requiring a human interviewer on the call.
 
-3. **On-Premises** — Full deployment within client's own data center or VPC. Requires Kubernetes 1.24+ or Docker Compose. iMocha provides a deployment runbook, Helm charts, and 90-day implementation support. Suitable for government and highly regulated industries.
+Key Tara AI specifications:
+- Powered by Azure OpenAI GPT-4o
+- Interview duration: 5–10 minutes per candidate
+- Accuracy: 90% alignment with human interviewer scoring (validated against structured human interview panels)
+- Technology: Retrieval-Augmented Generation (RAG), Human-in-the-Loop review, few-shot learning, SME validation
+- Outcome: structured interview transcript, candidate score, recommendation, and flag for human review when confidence is low
 
----
+Tara AI is designed for high-volume screening where scheduling a human interviewer for every candidate is not feasible. It does not replace final-round human interviews.
 
-## Supported Integrations
-
-### ATS (Applicant Tracking Systems)
-- Workday Recruiting (Workday Extend certified)
-- Greenhouse (native integration, no middleware)
-- Lever
-- SmartRecruiters
-- SAP SuccessFactors Recruiting
-- Oracle Taleo
-- iCIMS
-- Jobvite
-- BambooHR
-
-### HRIS
-- Workday HCM
-- SAP SuccessFactors
-- Oracle HCM Cloud
-- ADP Workforce Now
-- UKG Pro
-
-### LMS / LXP
-- Cornerstone OnDemand
-- Degreed
-- LinkedIn Learning Hub
-- Saba
-- SumTotal
-
-### SSO / Identity
-- SAML 2.0 (Okta, Azure AD, Ping Identity, OneLogin)
-- OIDC / OAuth 2.0
-- SCIM 2.0 for user provisioning
-
-### Custom Integration
-- REST API (OpenAPI 3.0 spec available)
-- Webhooks for real-time event push (assessment started, completed, scored, proctoring flagged)
-- Zapier integration for no-code workflows
+### TA Analytics
+- Real-time recruiter dashboards: pipeline volume, time-to-fill, assessment completion rates
+- Hire quality tracking: correlates assessment scores with post-hire performance data
+- Assessment effectiveness reports: item-level analytics, pass rate trends, score distribution
+- EEOC / UGESP compliance: demographic reporting aligned with EEOC Uniform Guidelines on Employee Selection Procedures (UGESP)
+- Diversity funnel analytics: tracks candidate demographic breakdown at each stage
 
 ---
 
-## Security & Compliance
+## Skills Intelligence (SI) Product Line
 
-### Certifications
-- ISO 27001:2022 certified
-- SOC 2 Type II certified (Security, Availability, Confidentiality)
-- GDPR compliant (EU-US Data Privacy Framework participant)
-- CCPA compliant
-- FedRAMP Ready (In Authorization)
+The SI product line is designed for HR, L&D, and workforce planning teams. It addresses employee development after hire — not pre-hire screening.
 
-### Data Security
-- AES-256 encryption at rest; TLS 1.3 in transit
-- Secrets management via HashiCorp Vault
-- All production access via PAM (CyberArk) with session recording
-- Annual penetration testing by independent third party (Bug Bounty on HackerOne)
-- Right to Erasure: GDPR Article 17 deletion requests processed within 30 days
+### Core SI Use Cases
+- Competency framework management: define and manage role-based competency profiles
+- Employee skill gap analysis: identify gaps between current employee skills and target role requirements
+- Upskilling and learning path recommendations: surface relevant learning content based on gap data
+- HRIS integration: sync employee data with UKG and other HRIS platforms
+- LMS integration: connect with learning management systems to ingest completion data
+- Workforce planning dashboards: visualize bench strength, succession risk, and skills distribution
 
-### Candidate Data Policies
-- Assessment data retained for 12 months by default; configurable to 3 months
-- Video proctoring footage: 90-day retention (configurable; client can request immediate deletion)
-- No sale of candidate data to third parties
-- Candidate consent flow built into every assessment link
+### SI and TA — Product Boundary
+TA and SI are separate product modules. TA features (ATS integration, pre-hire screening, Tara AI) do not automatically apply to SI, and SI features (competency frameworks, internal mobility) do not apply to TA unless explicitly documented.
+
+If a client requirement is unclear about whether it is pre-hire (TA) or post-hire (SI), clarify before mapping to a product.
 
 ---
 
-## Pricing Model
+## Deployment and Infrastructure
 
-iMocha follows a SaaS subscription model with usage-based components.
+iMocha is delivered as a SaaS platform. The platform maintains a 99.9% uptime SLA.
 
-### Assessment Platform
-- **Starter**: Up to 500 assessments/year; access to standard library; basic reporting — from $6,000/year
-- **Professional**: Up to 5,000 assessments/year; custom assessments; advanced analytics; ATS integrations — from $24,000/year
-- **Enterprise**: Unlimited assessments; Skills Intelligence Cloud; dedicated CSM; on-premises option; custom SLAs — custom pricing (typically $80,000–$500,000+/year)
-
-### Add-ons
-- AI Proctoring: $2–$5 per proctored session (volume discounts apply)
-- CodeSpace Live Interviews: $15–$30 per live session
-- Custom Simulations: One-time build fee $5,000–$50,000 depending on complexity
-- Skills Intelligence Cloud (standalone): $40–$120 per employee per year
-
-### Billing
-- Annual contract (monthly invoicing available for Enterprise)
-- Multi-year deals receive 10–15% discount
-- Procurement-friendly: MSA, DPA, and SLA addendums available; cleared through most enterprise procurement workflows
+Infrastructure highlights:
+- Transport encryption: TLS 1.2+
+- Data encryption at rest: AES-256
+- Secrets management: Azure Key Vault
+- Accessibility: WCAG 2.1 Level AA compliant (assessment player and admin portal)
+- Security certifications: ISO 27001:2022, SOC 2 Type II
 
 ---
 
-## Implementation & Onboarding
+## Support and Project Management
 
-### Standard Onboarding (SaaS) — 2–4 weeks
-Week 1: Account setup, SSO configuration, first admin trained
-Week 2: ATS/HRIS integration, question library review, first assessment built
-Week 3: Pilot with internal team or small candidate batch
-Week 4: Go-live, reporting dashboards configured
+iMocha provides structured implementation support and ongoing customer success management. Support tiers and project management terms are governed by the Support & Project Management policy document.
 
-### Enterprise Onboarding — 6–12 weeks
-- Dedicated Implementation Manager assigned
-- Custom integration development (REST API or middleware)
-- Skills Taxonomy workshop (2-day facilitated session with CHRO and HR BPs)
-- Admin certification training (16-hour course, iMocha Academy)
-- Hypercare: 30-day post-launch daily check-in cadence
-
----
-
-## Support Tiers
-
-| Tier | Included In | Response Time | Channels |
-|------|-------------|---------------|----------|
-| Standard | Starter, Professional | 24 hours (business days) | Email, Help Center |
-| Priority | Enterprise | 4 hours (24x7 for P1) | Email, Phone, Slack (shared channel) |
-| Premium | Enterprise add-on | 1 hour (24x7) | Dedicated Slack, WhatsApp, Phone |
-
-SLA uptime commitment: 99.9% monthly. Credits issued for downtime beyond SLA at 10% of monthly fee per hour (capped at 30%).
-
----
-
-## Customer Success Stories (Anonymized)
-
-**Global IT Services Firm (45,000 employees, India-HQ)**
-- Challenge: 60% offer-acceptance-to-joinee drop due to skill mismatch discovered post-offer
-- Solution: Deployed iMocha pre-offer technical screening + AI proctoring
-- Result: Offer rescind rate dropped 38%; time-to-fill reduced by 22 days
-
-**US Financial Services Company (8,000 employees)**
-- Challenge: No visibility into employees' actual cloud skills as company migrated to AWS
-- Solution: iMocha Skills Intelligence Cloud mapped 8,000 employees across 200 cloud competencies
-- Result: Identified $2.3M in potential external hiring cost avoidance through internal upskilling
-
-**European Staffing Agency**
-- Challenge: Manual screening of 10,000 candidates/month unsustainable
-- Solution: iMocha pre-screen assessments deployed at top-of-funnel
-- Result: 75% reduction in recruiter time per hire; candidate quality scores up 28%
+Standard SLA: 99.9% uptime. Details on response time commitments and escalation paths are in the iMocha Service Level Agreement (SLA).
