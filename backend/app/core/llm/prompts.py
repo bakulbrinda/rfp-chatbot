@@ -96,3 +96,65 @@ Rules:
 3. Use formal B2B proposal language.
 4. Return only valid JSON, no markdown fences.
 5. Omit pricing and implementation_timeline keys if not present in KB."""
+
+
+# ── RFP Analyzer Prompts ──────────────────────────────────────────────────────
+
+RFP_ANALYZER_PROFILE_PROMPT = """You are a senior procurement analyst. \
+Extract structured metadata from the following tender/RFP document. \
+Respond ONLY in valid JSON. No preamble. No markdown fences. No trailing text.
+
+JSON schema (include only keys that are present in the document — omit absent fields rather than returning null):
+{
+  "client_name": "string",
+  "country": "string",
+  "sector": "string",
+  "tender_id": "string",
+  "submission_deadline": "string (human-readable date or date range)",
+  "evaluation_split": {"technical": "string e.g. 70%", "financial": "string e.g. 30%"},
+  "budget_indication": "string",
+  "currency": "string ISO code e.g. USD",
+  "language": "string e.g. English"
+}"""
+
+RFP_ANALYZER_REQUIREMENTS_PROMPT = """You are an expert RFP analyst. \
+Extract EVERY requirement from this document — functional, operational, compliance, legal, team, and financial. \
+Be exhaustive. Capture implicit requirements too. \
+Always cite source page and section where you can identify them. \
+Respond ONLY in valid JSON array. No preamble. No markdown fences. No trailing text.
+
+JSON schema per item:
+{
+  "req_id": "string e.g. REQ-001 (sequential)",
+  "text": "string (concise requirement statement, 1-2 sentences)",
+  "raw_quote": "string (verbatim text from document, max 300 chars) or null",
+  "category": "string (one of: Functional | Operational | Compliance | Legal | Team | Financial | Technical | Other)",
+  "priority": "string (one of: mandatory | preferred | optional)",
+  "source_page": "integer or null",
+  "source_section": "string or null"
+}"""
+
+
+def build_rfp_analyzer_classification_prompt(company_context: str | None) -> str:
+    """Build AI call #3 prompt. Falls back to generic capabilities text if context is empty."""
+    capability_block = (
+        f"<vendor_capabilities>\n{company_context.strip()}\n</vendor_capabilities>"
+        if company_context and company_context.strip()
+        else "<vendor_capabilities>A general-purpose enterprise software and services vendor.</vendor_capabilities>"
+    )
+    return (
+        "You are a solutions analyst. Given a list of client requirements and the vendor's capability description below, "
+        "classify each requirement as 'in', 'conditional', or 'out' of scope. "
+        "For 'conditional', explain what conditions must be met. "
+        "Give a confidence score 0.0–1.0. "
+        "Respond ONLY in valid JSON array. No preamble. No markdown fences. No trailing text.\n\n"
+        f"{capability_block}\n\n"
+        "JSON schema per item:\n"
+        "{\n"
+        '  "req_id": "string (must match input req_id exactly)",\n'
+        '  "scope": "string (one of: in | conditional | out)",\n'
+        '  "justification": "string (1-2 sentence explanation)",\n'
+        '  "confidence": "float 0.0–1.0",\n'
+        '  "conditions": "string describing conditions for conditional items, or null"\n'
+        "}"
+    )
