@@ -3,7 +3,7 @@ FROM python:3.11-slim AS base
 # System deps for unstructured, poppler (PDF), tesseract (OCR), libmagic
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic1 \
-    libgl1-mesa-glx \
+    libgl1 \
     poppler-utils \
     tesseract-ocr \
     libreoffice \
